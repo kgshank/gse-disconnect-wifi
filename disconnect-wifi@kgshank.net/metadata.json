@@ -8,5 +8,5 @@
     "description": "Adds a Disconnect option for Wifi in status menu, when a network is connected. Shows a Reconnect option, when no networks are connected.",
     "version": "6",
     "original-author": "GopI",
-    "url": "https://github.com/kgshank/gnome-shell-extensions/tree/master/Gnome%20Shell%20Extensions/disconnect-wifi%40kgshank.net"
+    "url": "https://github.com/kgshank/gse-disconnect-wifi"
 }
