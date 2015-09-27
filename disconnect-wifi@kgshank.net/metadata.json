@@ -1,7 +1,8 @@
 {
     "shell-version": [
         "3.14",
-        "3.16"
+        "3.16",
+        "3.18"
     ], 
     "uuid": "disconnect-wifi@kgshank.net", 
     "name": "Disconnect Wifi", 
