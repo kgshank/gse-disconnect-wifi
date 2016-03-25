@@ -9,7 +9,7 @@
     "uuid": "disconnect-wifi@kgshank.net", 
     "name": "Disconnect Wifi", 
     "description": "Adds a Disconnect option for Wifi in status menu, when a network is connected. Shows a Reconnect option, when no networks are connected.",
-    "version": "3.18.1",
+    "version": "11",
     "original-author": "GopI",
     "url": "https://github.com/kgshank/gse-disconnect-wifi"
 }
