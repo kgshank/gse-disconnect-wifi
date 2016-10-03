@@ -24,6 +24,7 @@ const Mainloop = imports.mainloop;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
+const SignalManager = Convenience.SignalManager;
 
 const Gettext = imports.gettext.domain('disconnect-wifi');
 const _ = Gettext.gettext;
@@ -32,22 +33,27 @@ function init() {
     Convenience.initTranslations("disconnect-wifi");
 }
 
+const RECONNECT_TEXT = _("Reconnect")
+const SPACE = " ";
+
 const WifiDisconnector = new Lang.Class({
     Name : 'WifiDisconnector',
     _init : function() {
         this._nAttempts = 0;
-        this._wifiDevices = {};
-	this._checkDevices();
+        this._signalManager = new SignalManager();
+        this._checkDevices();
+        this._activeConnections = {};
+        this._accessPoints = {};
     },
     
     _checkDevices : function() {
-	if(this._timeoutId){
+    	if(this._timeoutId){
            Mainloop.source_remove(this._timeoutId);
            this._timeoutId = null;
         }
-	let _network = Main.panel.statusArea.aggregateMenu._network;
-        if (_network) {
-            if (!_network._client || !_network._settings) {
+    	this._network = Main.panel.statusArea.aggregateMenu._network;
+        if (this._network) {
+            if (!this._network._client || !this._network._settings) {
                 // Shell not initialised completely wait for max of
                 // 100 * 1 sec
                 if (this._nAttempts++ < 100) {
@@ -55,19 +61,15 @@ const WifiDisconnector = new Lang.Class({
                             this._checkDevices));
                 }
             } else {
-                this._client = _network._client;
-                this._settings = _network._settings;
-                this._deviceAddedId = this._client.connect(
-                        'device-added', Lang.bind(this,
-                                this._deviceAdded));
-                this._deviceRemovedId = this._client.connect(
-                        'device-removed', Lang.bind(this,
-                                this._deviceRemoved));
-                let _nmDevices = _network._nmDevices;
-    
-                for ( var i = 0; i < _nmDevices.length; i++) {
-                    this._deviceAdded(this._client, _nmDevices[i]);
-                }
+                this._client = this._network._client;
+                this._settings = this._network._settings;
+                this._signalManager.addSignal(this._client, 'device-added', 
+                		Lang.bind(this, this._deviceAdded));
+                this._signalManager.addSignal(this._client, 'device-removed', 
+                		Lang.bind(this, this._deviceRemoved));
+                this._network._nmDevices.forEach(function(device){
+                	this._deviceAdded(this._client, device);
+                }, this);
             }
         }
     },
@@ -76,54 +78,65 @@ const WifiDisconnector = new Lang.Class({
         if (device.get_device_type() != NetworkManager.DeviceType.WIFI) {
             return;
         }
-
-        let _this = this;
-        this._wifiDevices[device.udi] = new Object();
-        if(this._wifiDevices[device.udi].timeoutId){
-            Mainloop.source_remove(this._wifiDevices[device.udi].timeoutId);
-            this._wifiDevices[device.udi].timeoutId = null;
-        }
-        if (!device._delegate) {
-            this._wifiDevices[device.udi].timeoutId = Mainloop.timeout_add(1000, function() {
-                _this._deviceAdded(client, device);
-            });
-            return;
-        }
+        
+        if(device.active_connection) {
+    		this._activeConnections[device] = device.active_connection;
+    	}
+    	
+    	if(device.active_access_point) {
+    		this._accessPoints[device] = device.active_access_point;
+    	}
+        this._addAllMenus(device);
+    },
     
-        this._wifiDevices[device.udi].device = device;
-        let wrapper = device._delegate;
-    
-        if (!this._wifiDevices[device.udi].disconnectItem) {
-            
-            this._wifiDevices[device.udi].disconnectItem 
-                    = wrapper.item.menu.addAction(_("Disconnect"), 
-                            function() {
-                                device.disconnect(null, null);
-                            });
-                   
-        }
-
-        if (!this._wifiDevices[device.udi].reconnectItem) {
-           
-            this._wifiDevices[device.udi].reconnectItem 
+    _addAllMenus : function(device) {
+    	if (device)
+    	{
+    		if (!device._delegate) {
+    			if(!device.timeout) {
+	    			device.timeout = Mainloop.timeout_add(1000, Lang.bind(this, function() {
+	                    return this._addAllMenus(device);
+	                }));
+	                return true;
+    			} else {
+    				return true;
+    			}
+            }
+    		
+    		if(device.timeout) {
+    			Mainloop.source_remove(device.timeout);
+    			device.timeout = null;
+    		}
+    			
+    		let wrapper = device._delegate;
+        
+	        if (!wrapper.disconnectItem) {
+	            wrapper.disconnectItem 
+	        		= wrapper.item.menu.addAction(_("Disconnect"), 
+	                            function() {
+	                                device.disconnect(null, null);
+	                            });
+	        }
+	        wrapper.disconnectItem.actor.visible = false;
+	        
+	        if (!wrapper.reconnectItem) {
+	         	wrapper.reconnectItem
                     = wrapper.item.menu.addAction("", 
-                            function() {
-                                _this._reconnect(device);
-                            });
-        } 
-        this._stateChanged(device, device.state, device.state, null);   
-    
-        if (!this._wifiDevices[device.udi].stateChangeId) {
-            this._wifiDevices[device.udi].stateChangeId
-                = device.connect('state-changed', Lang.bind(this, this._stateChanged));
-        }
-
+                            Lang.bind(this, function() {
+                                this._reconnect(device);
+                            }));
+	        }
+	        this._stateChanged(device, device.state, device.state, null);   
+	        
+	        this._signalManager.addSignal(device, 'state-changed', Lang.bind(this, this._stateChanged));	        
+    	}
+    	return false;
     },
 
     _reconnect : function(device) {
-        if (this._wifiDevices[device.udi].active_connection) {
+        if (this._activeConnections[device]) {
             this._client.activate_connection(
-                this._settings.get_connection_by_path(this._wifiDevices[device.udi].active_connection.connection),
+                this._settings.get_connection_by_path(this._activeConnections[device].connection),
                      device,null,null,null);
         } else {
             this._client.activate_connection(null,device,null,null,null);
@@ -135,65 +148,67 @@ const WifiDisconnector = new Lang.Class({
             return;
         }
     	
-        if (this._wifiDevices[device.udi].disconnectItem) {
-            this._wifiDevices[device.udi].disconnectItem.actor.visible 
-                    = (newstate > NetworkManager.DeviceState.DISCONNECTED);
-        }
-
-        if (device.active_access_point) {
-            this._wifiDevices[device.udi].accessPoint = device.active_access_point;
-        }
-
-        if (device.active_connection) {
-            this._wifiDevices[device.udi].active_connection = device.active_connection;
-        }
-
-        if (this._wifiDevices[device.udi].reconnectItem) {
-            this._wifiDevices[device.udi].reconnectItem.actor.visible 
+    	if(device.active_connection) {
+    		this._activeConnections[device] = device.active_connection;
+    	}
+    	
+    	if(device.active_access_point) {
+    		this._accessPoints[device] = device.active_access_point;
+    	}
+    	
+    	if (!device._delegate) {
+    		return;
+    	}
+    	
+    	let wrapper = device._delegate;
+    	if (wrapper.disconnectItem) {
+    		wrapper.disconnectItem.actor.visible 
+    			= newstate > NetworkManager.DeviceState.DISCONNECTED;
+    	}
+    	
+    	if (wrapper.reconnectItem) {
+    	    wrapper.reconnectItem.actor.visible 
                     = (newstate == NetworkManager.DeviceState.DISCONNECTED) 
-                         && this._wifiDevices[device.udi].active_connection;
-            this._wifiDevices[device.udi].reconnectItem.label.text = 
-                    (this._wifiDevices[device.udi].accessPoint) ? _("Reconnect")+" " 
-                    + imports.ui.status.network.ssidToLabel(this._wifiDevices[device.udi].accessPoint.get_ssid()) : _("Reconnect");
+                         && (this._activeConnections[device] != null);
+            
+            wrapper.reconnectItem.label.text = 
+                    (this._accessPoints[device]) ?  RECONNECT_TEXT + SPACE 
+                    + imports.ui.status.network.ssidToLabel(this._accessPoints[device].get_ssid()) : RECONNECT_TEXT;
         }
-    },
-    
+     },
+        
     _deviceRemoved : function(client, device) {
         if (device.get_device_type() != NetworkManager.DeviceType.WIFI) {
             return;
         }
-
-        if (this._wifiDevices[device.udi].disconnectItem) {
-            this._wifiDevices[device.udi].disconnectItem.destroy();
-            this._wifiDevices[device.udi].disconnectItem = null;
+        
+        this._activeConnections[device] = null;
+    	
+    	this._accessPoints[device] = null;
+        
+        if (!device._delegate) {
+    		return;
+    	}
+    	
+    	let wrapper = device._delegate;
+        if (wrapper.disconnectItem) {
+        	wrapper.disconnectItem.destroy();
+        	wrapper.disconnectItem = null;
         }
 
-        if (this._wifiDevices[device.udi].reconnectItem) {
-            this._wifiDevices[device.udi].reconnectItem.destroy();
-            this._wifiDevices[device.udi].reconnectItem = null;
+        if (wrapper.reconnectItem) {
+            wrapper.reconnectItem.destroy();
+            wrapper.reconnectItem = null;
         }
-
-        if (this._wifiDevices[device.udi].stateChangeId) {
-            GObject.Object.prototype.disconnect.call(device,
-                    this._wifiDevices[device.udi].stateChangeId);
-            this._wifiDevices[device.udi].stateChangeId = null;
-        }
-
-        if (this._wifiDevices[device.udi].device) {
-            this._wifiDevices[device.udi].device = null;
-        }
-        delete this._wifiDevices[device.udi];
+        
+        this._signalManager.disconnectBySource(device);
     },
 
     destroy : function() {
-        for ( var udi in this._wifiDevices) {
-            if (this._wifiDevices.hasOwnProperty(udi)) {
-                this._deviceRemoved(this._client,
-                        this._wifiDevices[udi].device);
-            }
-        }
-        this._client.disconnect(this._deviceAddedId);
-        this._client.disconnect(this._deviceRemovedId);
+    	this._network._nmDevices.forEach(function(device){
+        	this._deviceRemoved(this._client, device);
+        }, this);
+        this._signalManager.disconnectAll();
     }
 });
 
