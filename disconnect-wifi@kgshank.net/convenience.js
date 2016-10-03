@@ -93,7 +93,7 @@ const SignalManager = new Lang.Class({
         this._signals.forEach(function(obj) {obj.disconnect();});
     },
     
-    disconnectBySource: function() {
+    disconnectBySource: function(signalSource) {
     	if(this._signalsBySource[signalSource]) {
     		this._signalsBySource[signalSource].forEach(function(obj) {obj.disconnect();});
         }
