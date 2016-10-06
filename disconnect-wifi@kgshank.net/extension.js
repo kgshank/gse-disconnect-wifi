@@ -17,7 +17,6 @@ Orignal Author: Gopi Sankar Karmegam
     	
 const Lang = imports.lang;
 const Main = imports.ui.main;
-const GObject = imports.gi.GObject;
 const NetworkManager = imports.gi.NetworkManager;
 const NMClient = imports.gi.NMClient;
 const Mainloop = imports.mainloop;
@@ -41,9 +40,9 @@ const WifiDisconnector = new Lang.Class({
     _init : function() {
         this._nAttempts = 0;
         this._signalManager = new SignalManager();
-        this._checkDevices();
         this._activeConnections = {};
         this._accessPoints = {};
+        this._checkDevices();
     },
     
     _checkDevices : function() {
@@ -63,27 +62,27 @@ const WifiDisconnector = new Lang.Class({
             } else {
                 this._client = this._network._client;
                 this._settings = this._network._settings;
+
+                for (let device of this._network._nmDevices) {
+                	this._deviceAdded(this._client, device);
+                }
                 this._signalManager.addSignal(this._client, 'device-added', 
                 		Lang.bind(this, this._deviceAdded));
                 this._signalManager.addSignal(this._client, 'device-removed', 
                 		Lang.bind(this, this._deviceRemoved));
-                this._network._nmDevices.forEach(function(device){
-                	this._deviceAdded(this._client, device);
-                }, this);
             }
         }
     },
     
     _deviceAdded : function(client, device) {
-        if (device.get_device_type() != NetworkManager.DeviceType.WIFI) {
+    	if (device.get_device_type() != NetworkManager.DeviceType.WIFI) {
             return;
         }
-        
         if(device.active_connection) {
     		this._activeConnections[device] = device.active_connection;
     	}
-    	
-    	if(device.active_access_point) {
+        
+        if(device.active_access_point) {
     		this._accessPoints[device] = device.active_access_point;
     	}
         this._addAllMenus(device);
@@ -178,13 +177,16 @@ const WifiDisconnector = new Lang.Class({
      },
         
     _deviceRemoved : function(client, device) {
-        if (device.get_device_type() != NetworkManager.DeviceType.WIFI) {
+    	if (device.get_device_type() != NetworkManager.DeviceType.WIFI) {
             return;
         }
-        
-        this._activeConnections[device] = null;
+        if(this._activeConnections && this._activeConnections[device]) {
+        	this._activeConnections[device] = null;
+        }
     	
-    	this._accessPoints[device] = null;
+    	if(this._accessPoints && this._accessPoints[device]) {
+    		this._accessPoints[device] = null;
+    	}
         
         if (!device._delegate) {
     		return;

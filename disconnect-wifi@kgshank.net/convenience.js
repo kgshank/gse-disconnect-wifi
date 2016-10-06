@@ -17,7 +17,7 @@ Orignal Author: Gopi Sankar Karmegam
     	
 const Lang = imports.lang;
 const Gettext = imports.gettext;
-
+const GObject = imports.gi.GObject;
 const Config = imports.misc.config;
 const ExtensionUtils = imports.misc.extensionUtils;
 
@@ -61,7 +61,7 @@ const Signal = new Lang.Class({
 
     disconnect: function() {
         if(this._signalId) {
-            this._signalSource.disconnect(this._signalId);
+        	GObject.Object.prototype.disconnect.call(this._signalSource, this._signalId);
             this._signalId = null;
         }
     }
