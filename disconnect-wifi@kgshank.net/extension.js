@@ -32,7 +32,7 @@ function init() {
     Convenience.initTranslations("disconnect-wifi");
 }
 
-const RECONNECT_TEXT = _("Reconnect")
+const RECONNECT_TEXT = "Reconnect"
 const SPACE = " ";
 
 const WifiDisconnector = new Lang.Class({
@@ -171,8 +171,8 @@ const WifiDisconnector = new Lang.Class({
                          && (this._activeConnections[device] != null);
             
             wrapper.reconnectItem.label.text = 
-                    (this._accessPoints[device]) ?  RECONNECT_TEXT + SPACE 
-                    + imports.ui.status.network.ssidToLabel(this._accessPoints[device].get_ssid()) : RECONNECT_TEXT;
+                    (this._accessPoints[device]) ?  _(RECONNECT_TEXT) + SPACE 
+                    + imports.ui.status.network.ssidToLabel(this._accessPoints[device].get_ssid()) : _(RECONNECT_TEXT) ;
         }
      },
         
