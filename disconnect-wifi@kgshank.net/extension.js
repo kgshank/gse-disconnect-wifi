@@ -170,9 +170,10 @@ const WifiDisconnector = new Lang.Class({
                     = (newstate == NetworkManager.DeviceState.DISCONNECTED) 
                          && (this._activeConnections[device] != null);
             
+            let accessPoint = this._accessPoints[device];
             wrapper.reconnectItem.label.text = 
-                    (this._accessPoints[device]) ?  _(RECONNECT_TEXT) + SPACE 
-                    + imports.ui.status.network.ssidToLabel(this._accessPoints[device].get_ssid()) : _(RECONNECT_TEXT) ;
+                    (accessPoint) ?  _(RECONNECT_TEXT) + SPACE 
+                    + imports.ui.status.network.ssidToLabel(accessPoint.get_ssid()) : _(RECONNECT_TEXT) ;
         }
      },
         

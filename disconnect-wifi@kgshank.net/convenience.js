@@ -84,7 +84,8 @@ var SignalManager = new Lang.Class({
             if(!this._signalsBySource[signalSource]) {
             	this._signalsBySource[signalSource] = [];
             }
-            this._signalsBySource[signalSource].push(obj)
+            let item = this._signalsBySource[signalSource];
+            item.push(obj);
         }
 		return obj;
     },
@@ -95,7 +96,8 @@ var SignalManager = new Lang.Class({
     
     disconnectBySource: function(signalSource) {
     	if(this._signalsBySource[signalSource]) {
-    		this._signalsBySource[signalSource].forEach(function(obj) {obj.disconnect();});
+            let signalBySource = this._signalsBySource[signalSource];
+            signalBySource.forEach(function(obj) {obj.disconnect();});
         }
     }
 });
