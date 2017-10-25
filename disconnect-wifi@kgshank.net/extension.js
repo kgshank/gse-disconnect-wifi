@@ -113,8 +113,9 @@ const WifiDisconnector = new Lang.Class({
 	            wrapper.disconnectItem 
 	        		= wrapper.item.menu.addAction(_("Disconnect"), 
 	                            function() {
-	                                device.disconnect(null, null);
+	                                device.disconnect(null);
 	                            });
+	            wrapper.item.menu.moveMenuItem(wrapper.disconnectItem,2);
 	        }
 	        wrapper.disconnectItem.actor.visible = false;
 	        
@@ -124,6 +125,7 @@ const WifiDisconnector = new Lang.Class({
                             Lang.bind(this, function() {
                                 this._reconnect(device);
                             }));
+	         	wrapper.item.menu.moveMenuItem(wrapper.reconnectItem,3);
 	        }
 	        this._stateChanged(device, device.state, device.state, null);   
 	        
@@ -133,12 +135,13 @@ const WifiDisconnector = new Lang.Class({
     },
 
     _reconnect : function(device) {
-        if (this._activeConnections[device]) {
+    	let _activeConnection = this._activeConnections[device];
+        if (_activeConnection) {
             this._client.activate_connection(
-                this._settings.get_connection_by_path(this._activeConnections[device].connection),
-                     device,null,null,null);
+                this._settings.get_connection_by_path(_activeConnection.connection),
+                     device,null,null);
         } else {
-            this._client.activate_connection(null,device,null,null,null);
+            this._client.activate_connection(null,device,null,null);
         }
     },
 
@@ -170,9 +173,10 @@ const WifiDisconnector = new Lang.Class({
                     = (newstate == NetworkManager.DeviceState.DISCONNECTED) 
                          && (this._activeConnections[device] != null);
             
+    	    let _accessPoint = this._accessPoints[device]; 
             wrapper.reconnectItem.label.text = 
-                    (this._accessPoints[device]) ?  _(RECONNECT_TEXT) + SPACE 
-                    + imports.ui.status.network.ssidToLabel(this._accessPoints[device].get_ssid()) : _(RECONNECT_TEXT) ;
+                    (_accessPoint) ?  _(RECONNECT_TEXT) + SPACE 
+                    + imports.ui.status.network.ssidToLabel(_accessPoint.get_ssid()) : _(RECONNECT_TEXT) ;
         }
      },
         
@@ -207,6 +211,9 @@ const WifiDisconnector = new Lang.Class({
     },
 
     destroy : function() {
+    	if(!this._network || !this._network._nmDevices){
+    		return;
+    	}    		
     	this._network._nmDevices.forEach(function(device){
         	this._deviceRemoved(this._client, device);
         }, this);

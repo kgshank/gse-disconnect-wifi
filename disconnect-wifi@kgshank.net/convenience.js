@@ -84,7 +84,8 @@ const SignalManager = new Lang.Class({
             if(!this._signalsBySource[signalSource]) {
             	this._signalsBySource[signalSource] = [];
             }
-            this._signalsBySource[signalSource].push(obj)
+            let sigSource = this._signalsBySource[signalSource];
+            sigSource.push(obj)
         }
 		return obj;
     },
