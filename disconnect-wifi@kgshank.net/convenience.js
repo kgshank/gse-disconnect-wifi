@@ -67,7 +67,7 @@ const Signal = new Lang.Class({
     }
 });
 
-const SignalManager = new Lang.Class({
+var SignalManager = new Lang.Class({
 	Name: 'SignalManager',
 
 	_init: function() {
@@ -84,8 +84,8 @@ const SignalManager = new Lang.Class({
             if(!this._signalsBySource[signalSource]) {
             	this._signalsBySource[signalSource] = [];
             }
-            let sigSource = this._signalsBySource[signalSource];
-            sigSource.push(obj)
+            let item = this._signalsBySource[signalSource];
+            item.push(obj);
         }
 		return obj;
     },
@@ -96,7 +96,8 @@ const SignalManager = new Lang.Class({
     
     disconnectBySource: function(signalSource) {
     	if(this._signalsBySource[signalSource]) {
-    		this._signalsBySource[signalSource].forEach(function(obj) {obj.disconnect();});
+            let signalBySource = this._signalsBySource[signalSource];
+            signalBySource.forEach(function(obj) {obj.disconnect();});
         }
     }
 });
