@@ -211,7 +211,7 @@ const WifiDisconnector = new Lang.Class({
     },
 
     destroy : function() {
-        if (this._network._nmDevices) {
+        if (this._network && this._network._nmDevices) {
             this._network._nmDevices.forEach(function(device){
                 this._deviceRemoved(this._client, device);
             }, this);
