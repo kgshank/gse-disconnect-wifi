@@ -14,11 +14,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 Orignal Author: Gopi Sankar Karmegam
 ******************************************************************************/
-    	
+
+/* Ugly. This is here so that we don't crash old libnm-glib based shells unnecessarily
+ * by loading the new libnm.so. Should go away eventually */
+const libnm_glib = imports.gi.GIRepository.Repository.get_default().is_registered("NMClient", "1.0");
+
 const Lang = imports.lang;
 const Main = imports.ui.main;
-const NetworkManager = imports.gi.NetworkManager;
-const NMClient = imports.gi.NMClient;
+const NM = libnm_glib ? imports.gi.NetworkManager : imports.gi.NM;
 const Mainloop = imports.mainloop;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
@@ -52,7 +55,7 @@ const WifiDisconnector = new Lang.Class({
         }
     	this._network = Main.panel.statusArea.aggregateMenu._network;
         if (this._network) {
-            if (!this._network._client || !this._network._settings) {
+            if (!this._network._client || (libnm_glib && !this._network._settings)) {
                 // Shell not initialised completely wait for max of
                 // 100 * 1 sec
                 if (this._nAttempts++ < 100) {
@@ -61,7 +64,8 @@ const WifiDisconnector = new Lang.Class({
                 }
             } else {
                 this._client = this._network._client;
-                this._settings = this._network._settings;
+                if (libnm_glib)
+                    this._settings = this._network._settings;
 
                 for (let device of this._network._nmDevices) {
                 	this._deviceAdded(this._client, device);
@@ -75,7 +79,7 @@ const WifiDisconnector = new Lang.Class({
     },
     
     _deviceAdded : function(client, device) {
-    	if (device.get_device_type() != NetworkManager.DeviceType.WIFI) {
+    	if (device.get_device_type() != NM.DeviceType.WIFI) {
             return;
         }
         if(device.active_connection) {
@@ -136,17 +140,26 @@ const WifiDisconnector = new Lang.Class({
 
     _reconnect : function(device) {
     	let _activeConnection = this._activeConnections[device];
-        if (_activeConnection) {
-            this._client.activate_connection(
-                this._settings.get_connection_by_path(_activeConnection.connection),
-                     device,null,null);
+
+        if (libnm_glib) {
+            if (_activeConnection) {
+                this._client.activate_connection(
+                    this._settings.get_connection_by_path(_activeConnection.connection.path),
+                         device,null,null);
+            } else {
+                this._client.activate_connection(null,device,null,null);
+            }
         } else {
-            this._client.activate_connection(null,device,null,null);
+            if (_activeConnection) {
+                this._client.activate_connection_async(_activeConnection.connection,device,null,null,null);
+            } else {
+                this._client.activate_connection_async(null,device,null,null,null);
+            }
         }
     },
 
     _stateChanged :  function(device, newstate, oldstate, reason) {
-    	if (device.get_device_type() != NetworkManager.DeviceType.WIFI) {
+    	if (device.get_device_type() != NM.DeviceType.WIFI) {
             return;
         }
     	
@@ -165,12 +178,12 @@ const WifiDisconnector = new Lang.Class({
     	let wrapper = device._delegate;
     	if (wrapper.disconnectItem) {
     		wrapper.disconnectItem.actor.visible 
-    			= newstate > NetworkManager.DeviceState.DISCONNECTED;
+    			= newstate > NM.DeviceState.DISCONNECTED;
     	}
     	
     	if (wrapper.reconnectItem) {
     	    wrapper.reconnectItem.actor.visible 
-                    = (newstate == NetworkManager.DeviceState.DISCONNECTED) 
+                    = (newstate == NM.DeviceState.DISCONNECTED) 
                          && (this._activeConnections[device] != null);
             
            let accessPoint = this._accessPoints[device];
@@ -181,7 +194,7 @@ const WifiDisconnector = new Lang.Class({
      },
         
     _deviceRemoved : function(client, device) {
-    	if (device.get_device_type() != NetworkManager.DeviceType.WIFI) {
+    	if (device.get_device_type() != NM.DeviceType.WIFI) {
             return;
         }
         if(this._activeConnections && this._activeConnections[device]) {
