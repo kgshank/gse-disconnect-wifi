@@ -144,14 +144,14 @@ const WifiDisconnector = new Lang.Class({
         if (libnm_glib) {
             if (_activeConnection) {
                 this._client.activate_connection(
-                    this._settings.get_connection_by_path(_activeConnection.connection.path),
+                    this._settings.get_connection_by_path(_activeConnection.connection),
                          device,null,null);
             } else {
                 this._client.activate_connection(null,device,null,null);
             }
         } else {
             if (_activeConnection) {
-                this._client.activate_connection_async(_activeConnection.connection,device,null,null,null);
+                this._client.activate_connection_async(_activeConnection.connection.path,device,null,null,null);
             } else {
                 this._client.activate_connection_async(null,device,null,null,null);
             }
