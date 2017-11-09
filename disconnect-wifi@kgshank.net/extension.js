@@ -151,7 +151,7 @@ const WifiDisconnector = new Lang.Class({
             }
         } else {
             if (_activeConnection) {
-                this._client.activate_connection_async(_activeConnection.connection.path,device,null,null,null);
+                this._client.activate_connection_async(_activeConnection.connection,device,null,null,null);
             } else {
                 this._client.activate_connection_async(null,device,null,null,null);
             }
