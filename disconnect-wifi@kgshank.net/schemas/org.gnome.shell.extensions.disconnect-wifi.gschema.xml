@@ -1,0 +1,9 @@
+<schemalist >
+   <schema id="org.gnome.shell.extensions.disconnect-wifi" path="/org/gnome/shell/extensions/disconnect-wifi/">
+    <key name="show-reconnect-always" type="b">
+      <default>false</default>
+      <summary>Preference to show the reconnect option always</summary>
+      <description>Value set to false shows the reconnect option only when wifi device is not connected to any network</description>
+    </key>   
+  </schema>
+</schemalist>
