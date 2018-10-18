@@ -27,6 +27,7 @@ const Mainloop = imports.mainloop;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const SignalManager = Convenience.SignalManager;
+const Prefs = Me.imports.prefs;
 
 const Gettext = imports.gettext.domain('disconnect-wifi');
 const _ = Gettext.gettext;
@@ -46,6 +47,7 @@ const WifiDisconnector = new Lang.Class({
         this._activeConnections = {};
         this._accessPoints = {};
         this._checkDevices();
+        this._gsettings = Convenience.getSettings(Prefs.SETTINGS_SCHEMA);
     },
     
     _checkDevices : function() {
@@ -74,6 +76,8 @@ const WifiDisconnector = new Lang.Class({
                 		Lang.bind(this, this._deviceAdded));
                 this._signalManager.addSignal(this._client, 'device-removed', 
                 		Lang.bind(this, this._deviceRemoved));
+                this._signalManager.addSignal(this._gsettings,"changed::" + Prefs.SHOW_RECONNECT_ALWAYS,
+                		Lang.bind(this,this._setDevicesReconnectVisibility) );
             }
         }
     },
@@ -125,12 +129,15 @@ const WifiDisconnector = new Lang.Class({
 	        
 	        if (!wrapper.reconnectItem) {
 	         	wrapper.reconnectItem
-                    = wrapper.item.menu.addAction("", 
+                    = wrapper.item.menu.addAction(_(RECONNECT_TEXT), 
                             Lang.bind(this, function() {
                                 this._reconnect(device);
                             }));
 	         	wrapper.item.menu.moveMenuItem(wrapper.reconnectItem,3);
 	        }
+	        
+	        wrapper.reconnectItem.actor.visible = false;
+	        
 	        this._stateChanged(device, device.state, device.state, null);   
 	        
 	        this._signalManager.addSignal(device, 'state-changed', Lang.bind(this, this._stateChanged));	        
@@ -139,23 +146,38 @@ const WifiDisconnector = new Lang.Class({
     },
 
     _reconnect : function(device) {
-    	let _activeConnection = this._activeConnections[device];
-
-        if (libnm_glib) {
-            if (_activeConnection) {
-                this._client.activate_connection(
-                    this._settings.get_connection_by_path(_activeConnection.connection),
-                         device,null,null);
-            } else {
-                this._client.activate_connection(null,device,null,null);
-            }
-        } else {
-            if (_activeConnection) {
-                this._client.activate_connection_async(_activeConnection.connection,device,null,null,null);
-            } else {
-                this._client.activate_connection_async(null,device,null,null,null);
-            }
+    	if(this._RtimeoutId){
+           Mainloop.source_remove(this._RtimeoutId);
+           this._RtimeoutId = null;
         }
+    	global.log(device.state);
+		
+    	if(device.state > NM.DeviceState.DISCONNECTED){
+    		if(device.state != NM.DeviceState.DEACTIVATING && device.state != NM.DeviceState.DISCONNECTING) {
+    			device.disconnect(null);
+    		}
+    		let me = this;
+    	    this._RtimeoutId = Mainloop.timeout_add(1000, function(){me._reconnect(device);});    	                
+    	}
+    	else {
+	    	let _activeConnection = this._activeConnections[device];
+	
+	        if (libnm_glib) {
+	            if (_activeConnection) {
+	                this._client.activate_connection(
+	                    this._settings.get_connection_by_path(_activeConnection.connection),
+	                         device,null,null);
+	            } else {
+	                this._client.activate_connection(null,device,null,null);
+	            }
+	        } else {
+	            if (_activeConnection) {
+	                this._client.activate_connection_async(_activeConnection.connection,device,null,null,null);
+	            } else {
+	                this._client.activate_connection_async(null,device,null,null,null);
+	            }
+	        }
+    	}
     },
 
     _stateChanged :  function(device, newstate, oldstate, reason) {
@@ -181,16 +203,24 @@ const WifiDisconnector = new Lang.Class({
     			= newstate > NM.DeviceState.DISCONNECTED;
     	}
     	
-    	if (wrapper.reconnectItem) {
-    	    wrapper.reconnectItem.actor.visible 
-                    = (newstate == NM.DeviceState.DISCONNECTED) 
-                         && (this._activeConnections[device] != null);
-            
-           let accessPoint = this._accessPoints[device];
+    	this._setReconnectVisibility(device, newstate);
+     },
+     
+     _setReconnectVisibility : function(device, state) {
+    	 global.log("Device Current State: " + state);
+    	 let wrapper = device._delegate;
+    	 if (wrapper.reconnectItem) {
+     		let showReconnect = this._gsettings.get_boolean(Prefs.SHOW_RECONNECT_ALWAYS);
+     	                 
+            let accessPoint = this._accessPoints[device];
             wrapper.reconnectItem.label.text = 
-                    (accessPoint) ?  _(RECONNECT_TEXT) + SPACE 
-                    + imports.ui.status.network.ssidToLabel(accessPoint.get_ssid()) : _(RECONNECT_TEXT) ;
-        }
+                     (accessPoint) ?  _(RECONNECT_TEXT) + SPACE 
+                     + imports.ui.status.network.ssidToLabel(accessPoint.get_ssid()) : _(RECONNECT_TEXT) ;
+                     
+            wrapper.reconnectItem.actor.visible 
+                     = (state == NM.DeviceState.DISCONNECTED || state == NM.DeviceState.DISCONNECTING ||showReconnect);
+                         // && (this._activeConnections[device] != null);
+         } 
      },
         
     _deviceRemoved : function(client, device) {
@@ -222,11 +252,19 @@ const WifiDisconnector = new Lang.Class({
         
         this._signalManager.disconnectBySource(device);
     },
+    
+    _setDevicesReconnectVisibility : function()  {
+    	if (this._network && this._network._nmDevices) {
+            this._network._nmDevices.forEach(function(device) {
+            	this._setReconnectVisibility(device, device.state);   
+            }, this);
+        }
+    },
 
     destroy : function() {
         if (this._network && this._network._nmDevices) {
-            this._network._nmDevices.forEach(function(device){
-                this._deviceRemoved(this._client, device);
+            this._network._nmDevices.forEach(function(device) {
+                this._stateChanged(device, device.state, device.state, "");
             }, this);
         }
         this._signalManager.disconnectAll();
