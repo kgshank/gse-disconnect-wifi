@@ -46,8 +46,9 @@ const WifiDisconnector = new Lang.Class({
         this._signalManager = new SignalManager();
         this._activeConnections = {};
         this._accessPoints = {};
-        this._checkDevices();
         this._gsettings = Convenience.getSettings(Prefs.SETTINGS_SCHEMA);
+        //Note: Make sure don't initialize anything after this
+        this._checkDevices();
     },
     
     _checkDevices : function() {
