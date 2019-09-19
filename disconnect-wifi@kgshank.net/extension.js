@@ -92,9 +92,8 @@ var WifiDisconnector = class WifiDisconnector{
         {
             _l("Adding menu..");
 
-		
-	    if (!device._delegate) {
-		_l("Device delegate not ready, waiting...");
+            if (!device._delegate) {
+                _l("Device delegate not ready, waiting...");
                 if(!device.timeout) {
                     device.timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000,  () => {this._addAllMenus(device)});
                     return true;
@@ -132,8 +131,8 @@ var WifiDisconnector = class WifiDisconnector{
     }
 
     _reconnect(device) {
-	_l(device)
-	
+        _l(device)
+
         if(this._RtimeoutId){
             GLib.source_remove(this._RtimeoutId);
             this._RtimeoutId = null;
