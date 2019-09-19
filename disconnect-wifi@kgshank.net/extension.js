@@ -55,7 +55,7 @@ var WifiDisconnector = class WifiDisconnector{
                 // Shell not initialized completely wait for max of
                 // 100 * 1s
                 if (this._nAttempts++ < 100) {
-                    this._timeoutId = GLib.timeout_add(1000, this._checkDevices.bind(this));
+                    this._timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, this._checkDevices.bind(this));
                 }
             } else {
                 this._client = this._network._client;
@@ -90,7 +90,7 @@ var WifiDisconnector = class WifiDisconnector{
         {
             if (!device._delegate) {
                 if(!device.timeout) {
-                    device.timeout = GLib.timeout_add(1000,  device => this._addAllMenus.bind(this));
+                    device.timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000,  device => this._addAllMenus.bind(this));
                     return true;
                 } else {
                     return true;
@@ -137,7 +137,7 @@ var WifiDisconnector = class WifiDisconnector{
                 device.disconnect(null);
             }
 
-            this._RtimeoutId = GLib.timeout_add(1000, device => this._reconnect.bind(this));	                
+            this._RtimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, device => this._reconnect.bind(this));	                
         }
         else {
             let _activeConnection = this._activeConnections[device];
