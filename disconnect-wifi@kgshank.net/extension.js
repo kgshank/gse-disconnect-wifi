@@ -22,6 +22,8 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const SignalManager = Convenience.SignalManager;
 const Prefs = Me.imports.prefs;
+const _l = Convenience.log
+const _d = Convenience.dump
 
 const Gettext = imports.gettext.domain('disconnect-wifi');
 const _ = Gettext.gettext;
@@ -88,9 +90,13 @@ var WifiDisconnector = class WifiDisconnector{
     _addAllMenus(device) {
         if (device)
         {
-            if (!device._delegate) {
+            _l("Adding menu..");
+
+		
+	    if (!device._delegate) {
+		_l("Device delegate not ready, waiting...");
                 if(!device.timeout) {
-                    device.timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000,  device => this._addAllMenus.bind(this));
+                    device.timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000,  () => {this._addAllMenus(device)});
                     return true;
                 } else {
                     return true;
@@ -106,13 +112,13 @@ var WifiDisconnector = class WifiDisconnector{
             let menu = wrapper.item.menu;
 
             if (!wrapper.disconnectItem) {
-                wrapper.disconnectItem = menu.addAction(_("Disconnect"), () => device.disconnect);
+                wrapper.disconnectItem = menu.addAction(_("Disconnect"), () => device.disconnect(null));
                 menu.moveMenuItem(wrapper.disconnectItem,2);
             }
             wrapper.disconnectItem.actor.visible = false;
 
             if (!wrapper.reconnectItem) {
-                wrapper.reconnectItem = menu.addAction(_(RECONNECT_TEXT), device => this._reconnect.bind(this));
+                wrapper.reconnectItem = menu.addAction(_(RECONNECT_TEXT), () => {this._reconnect(device);});
                 menu.moveMenuItem(wrapper.reconnectItem,3);
             }
 
@@ -126,18 +132,20 @@ var WifiDisconnector = class WifiDisconnector{
     }
 
     _reconnect(device) {
+	_l(device)
+	
         if(this._RtimeoutId){
             GLib.source_remove(this._RtimeoutId);
             this._RtimeoutId = null;
         }
-        Lib.log(device.state);
+        _l(device.state);
 
         if(device.state > NM.DeviceState.DISCONNECTED){
             if(device.state != NM.DeviceState.DEACTIVATING && device.state != NM.DeviceState.DISCONNECTING) {
                 device.disconnect(null);
             }
 
-            this._RtimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, device => this._reconnect.bind(this));	                
+            this._RtimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => this._reconnect.bind(device));	                
         }
         else {
             let _activeConnection = this._activeConnections[device];
@@ -145,7 +153,7 @@ var WifiDisconnector = class WifiDisconnector{
             if (_activeConnection) {
                 this._client.activate_connection_async(_activeConnection.connection,device,null,null,null);
             } else {
-                this._client.activate_connection_async(null,device,null,null,null);
+                this._client.activate_connection_async(null,device ,null,null,null);
             }
         }
     }
@@ -177,7 +185,7 @@ var WifiDisconnector = class WifiDisconnector{
     }
 
     _setReconnectVisibility(device, state) {
-        Lib.log("Device Current State: " + state);
+        _l("Device Current State: " + state);
         let wrapper = device._delegate;
         if (wrapper.reconnectItem) {
             let showReconnect = this._gsettings.get_boolean(Prefs.SHOW_RECONNECT_ALWAYS);
