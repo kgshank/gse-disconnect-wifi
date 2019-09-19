@@ -1,15 +1,12 @@
 {
     "shell-version": [
-        "3.22",
-        "3.24",
-        "3.26",
-        "3.28",
-        "3.30"
+        "3.32",
+        "3.34"
     ], 
     "uuid": "disconnect-wifi@kgshank.net", 
     "name": "Disconnect Wifi", 
     "description": "Adds a Disconnect option for Wifi in status menu, when a network is connected. Shows a Reconnect option, after network is disconnected.",
-    "version": "20",
+    "version": "21",
     "original-author": "GopI",
     "url": "https://github.com/kgshank/gse-disconnect-wifi"
 }

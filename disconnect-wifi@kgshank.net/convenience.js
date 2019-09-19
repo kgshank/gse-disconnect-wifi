@@ -1,33 +1,35 @@
-/******************************************************************************
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+/*******************************************************************************
+ * This program is free software: you can redistribute it and/or modify it under
+ * the terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option) any later
+ * version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+ * details.
+ * 
+ * You should have received a copy of the GNU General Public License along with
+ * this program. If not, see <http://www.gnu.org/licenses/>.
+ * *****************************************************************************
+ * Original Author: Gopi Sankar Karmegam
+ ******************************************************************************/
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Orignal Author: Gopi Sankar Karmegam
-******************************************************************************/
-    	
-const Lang = imports.lang;
 const Gettext = imports.gettext;
 const Gio = imports.gi.Gio;
 const GObject = imports.gi.GObject;
 const Config = imports.misc.config;
 const ExtensionUtils = imports.misc.extensionUtils;
 
+var DEBUG = true;
+
 /**
  * initTranslations:
+ * 
  * @domain: (optional): the gettext domain to use
- *
- * Initialize Gettext to load translations from extensionsdir/locale.
- * If @domain is not provided, it will be taken from metadata['gettext-domain']
+ * 
+ * Initialize Gettext to load translations from extensionsdir/locale. If
+ * @domain is not provided, it will be taken from metadata['gettext-domain']
  */
 function initTranslations(domain) {
     let extension = ExtensionUtils.getCurrentExtension();
@@ -72,60 +74,67 @@ function getSettings(schema) {
     return new Gio.Settings({ settings_schema: schemaObj });
 }
 
+var Signal =  class Signal{
 
-
-const Signal = new Lang.Class({
-    Name: 'Signal',
-
-    _init: function(signalSource, signalName, callback) {
+    constructor(signalSource, signalName, callback) {
         this._signalSource = signalSource;
         this._signalName = signalName;
         this._signalCallback = callback;
-    },
+    }
 
-    connect: function() {
+    connect(){
         this._signalId = this._signalSource.connect(this._signalName, this._signalCallback);
-    },
+    }
 
-    disconnect: function() {
+    disconnect() {
         if(this._signalId) {
-        	GObject.Object.prototype.disconnect.call(this._signalSource, this._signalId);
+            GObject.Object.prototype.disconnect.call(this._signalSource, this._signalId);
             this._signalId = null;
         }
     }
-});
+}
 
-var SignalManager = new Lang.Class({
-	Name: 'SignalManager',
+var SignalManager = class SignalManager {
 
-	_init: function() {
-		this._signals = [];
-		this._signalsBySource = {};
-	},
+    constructor() {
+        this._signals = [];
+        this._signalsBySource = {};
+    }
 
-	addSignal: function(signalSource, signalName, callback) {
-		let obj = null;
-		if(signalSource && signalName && callback) {
+    addSignal(signalSource, signalName, callback) {
+        let obj = null;
+        if(signalSource && signalName && callback) {
             obj = new Signal(signalSource, signalName, callback);
             obj.connect();
             this._signals.push(obj);
             if(!this._signalsBySource[signalSource]) {
-            	this._signalsBySource[signalSource] = [];
+                this._signalsBySource[signalSource] = [];
             }
             let item = this._signalsBySource[signalSource];
             item.push(obj);
         }
-		return obj;
-    },
+        return obj;
+    }
 
-    disconnectAll: function() {
+    disconnectAll() {
         this._signals.forEach(function(obj) {obj.disconnect();});
-    },
-    
-    disconnectBySource: function(signalSource) {
-    	if(this._signalsBySource[signalSource]) {
+    }
+
+    disconnectBySource(signalSource) {
+        if(this._signalsBySource[signalSource]) {
             let signalBySource = this._signalsBySource[signalSource];
             signalBySource.forEach(function(obj) {obj.disconnect();});
         }
     }
-});
+}
+
+
+function setLog(value) {
+    DEBUG = value;
+}
+
+function log(msg) {
+    if ( DEBUG == true ) {
+        global.log("DWifi Debug: " + msg);
+    }
+}

@@ -3,18 +3,18 @@
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
  * version.
- *
+ * 
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
- *
+ * 
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
- *
- * Orignal Author: Gopi Sankar Karmegam
+ * *****************************************************************************
+ * Original Author: Gopi Sankar Karmegam
  ******************************************************************************/
- /* jshint moz:true */
+/* jshint moz:true */
 
 const GLib = imports.gi.GLib;
 const GObject = imports.gi.GObject;
@@ -30,20 +30,20 @@ const SignalManager = Lib.SignalManager;
 var SETTINGS_SCHEMA = "org.gnome.shell.extensions.disconnect-wifi";
 var SHOW_RECONNECT_ALWAYS = "show-reconnect-always";
 
-function init(){}
-
+function init() {
+}
 
 const DWifiSettingsWidget = new GObject.Class({
-    Name: 'DWifi.Prefs.Widget',
-    GTypeName: 'DWifiSettingsWidget',
-    Extends: Gtk.Box,
+    Name : 'DWifi.Prefs.Widget',
+    GTypeName : 'DWifiSettingsWidget',
+    Extends : Gtk.Box,
 
-    _init: function(params) {
+    _init : function(params) {
         this.parent(params);
         this.orientation = Gtk.Orientation.VERTICAL;
         this.spacing = 0;
 
-     // creates the settings
+        // creates the settings
         this._settings = Lib.getSettings(SETTINGS_SCHEMA);
 
         // creates the ui builder and add the main resource file
@@ -51,30 +51,33 @@ const DWifiSettingsWidget = new GObject.Class({
         let builder = new Gtk.Builder();
 
         if (builder.add_from_file(uiFilePath) == 0) {
-            global.log("JS LOG: could not load the ui file: %s".format(uiFilePath));
+            global.log("JS LOG: could not load the ui file: %s"
+                    .format(uiFilePath));
 
             let label = new Gtk.Label({
-                label: _("Could not load the preferences UI file"),
-                vexpand: true
+                label : _("Could not load the preferences UI file"),
+                vexpand : true
             });
 
             this.pack_start(label, true, true, 0);
         } else {
-            global.log('JS LOG:_UI file receive and load: '+uiFilePath);
+            Lib.log('JS LOG:_UI file receive and load: ' + uiFilePath);
 
             let mainContainer = builder.get_object("main-container");
 
             this.pack_start(mainContainer, true, true, 0);
 
             this._signalManager = new SignalManager();
-            
-            let showReconnectAlwaysSwitch = builder.get_object("show-reconnect-always");
-            
-            this._settings.bind(SHOW_RECONNECT_ALWAYS, showReconnectAlwaysSwitch, "active", Gio.SettingsBindFlags.DEFAULT);
+
+            let showReconnectAlwaysSwitch = builder
+                    .get_object("show-reconnect-always");
+
+            this._settings.bind(SHOW_RECONNECT_ALWAYS,
+                    showReconnectAlwaysSwitch, "active",
+                    Gio.SettingsBindFlags.DEFAULT);
         }
     }
 });
-
 
 function buildPrefsWidget() {
     let _settingsWidget = new DWifiSettingsWidget();
