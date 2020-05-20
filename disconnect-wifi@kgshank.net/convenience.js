@@ -23,6 +23,8 @@ const ExtensionUtils = imports.misc.extensionUtils;
 
 var DEBUG = true;
 
+const _logWrap = (log != undefined)?log:global.log;
+
 /**
  * initTranslations:
  * 
@@ -133,9 +135,9 @@ function setLog(value) {
     DEBUG = value;
 }
 
-function log(msg) {
+function _log(msg) {
     if ( DEBUG == true ) {
-        global.log("DWifi Debug: " + msg);
+        _logWrap("DWifi Debug: " + msg);
     }
 }
 
@@ -144,8 +146,8 @@ function dump(obj) {
     for(var propName in obj) {
         try{		    
             propValue = obj[propName];
-            log(propName + propValue);
+            _log(propName + propValue);
         }
-        catch(e){log(propName + "!!!Error!!!");}
+        catch(e){_log(propName + "!!!Error!!!");}
     } 
 }
