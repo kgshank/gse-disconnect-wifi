@@ -22,7 +22,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const SignalManager = Convenience.SignalManager;
 const Prefs = Me.imports.prefs;
-const _l = Convenience.log
+const _l = Convenience._log
 const _d = Convenience.dump
 
 const Gettext = imports.gettext.domain('disconnect-wifi');
