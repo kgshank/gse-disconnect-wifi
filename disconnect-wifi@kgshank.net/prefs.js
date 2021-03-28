@@ -42,6 +42,16 @@ const DWifiSettingsWidget = new GObject.Class({
 
     _init : function(params) {
         this.parent(params);
+        let uiFileSuffix = "";
+        if (Gtk.get_major_version() >= "4") {
+            uiFileSuffix = "40";
+            this.__addFn = this.append;
+            this.__showFn = this.show;
+        }
+        else {
+            this.__addFn = x => this.pack_start(x, true, true, 0);
+            this.__showFn = this.show_all;
+        }
         this.orientation = Gtk.Orientation.VERTICAL;
         this.spacing = 0;
 
@@ -49,7 +59,7 @@ const DWifiSettingsWidget = new GObject.Class({
         this._settings = Lib.getSettings(SETTINGS_SCHEMA);
 
         // creates the ui builder and add the main resource file
-        let uiFilePath = Me.path + "/ui/dwifi-prefs-dialog.glade";
+        let uiFilePath = Me.path + "/ui/dwifi-prefs-dialog" +uiFileSuffix +".glade";
         let builder = new Gtk.Builder();
 
         if (builder.add_from_file(uiFilePath) == 0) {
@@ -59,13 +69,13 @@ const DWifiSettingsWidget = new GObject.Class({
                 vexpand : true
             });
 
-            this.pack_start(label, true, true, 0);
+            this.__addFn(label);
         } else {
             _l('JS LOG:_UI file receive and load: ' + uiFilePath);
 
             let mainContainer = builder.get_object("main-container");
 
-            this.pack_start(mainContainer, true, true, 0);
+            this.__addFn(mainContainer);
 
             this._signalManager = new SignalManager();
 
@@ -81,7 +91,7 @@ const DWifiSettingsWidget = new GObject.Class({
 
 function buildPrefsWidget() {
     let _settingsWidget = new DWifiSettingsWidget();
-    _settingsWidget.show_all();
+    _settingsWidget.__showFn();
 
     return _settingsWidget;
 }
