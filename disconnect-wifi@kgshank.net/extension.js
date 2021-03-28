@@ -33,9 +33,9 @@ function init() {
 }
 
 const RECONNECT_TEXT = "Reconnect"
-    const SPACE = " ";
+const SPACE = " ";
 
-var WifiDisconnector = class WifiDisconnector{
+var WifiDisconnector = class WifiDisconnector {
     constructor() {
         this._nAttempts = 0;
         this._signalManager = new SignalManager();
@@ -47,7 +47,7 @@ var WifiDisconnector = class WifiDisconnector{
     }
 
     _checkDevices() {
-        if(this._timeoutId){
+        if (this._timeoutId) {
             GLib.source_remove(this._timeoutId);
             this._timeoutId = null;
         }
@@ -67,7 +67,7 @@ var WifiDisconnector = class WifiDisconnector{
                 }
                 this._signalManager.addSignal(this._client, 'device-added', this._deviceAdded.bind(this));
                 this._signalManager.addSignal(this._client, 'device-removed', this._deviceRemoved.bind(this));
-                this._signalManager.addSignal(this._gsettings,"changed::" + Prefs.SHOW_RECONNECT_ALWAYS, this._setDevicesReconnectVisibility.bind(this));
+                this._signalManager.addSignal(this._gsettings, "changed::" + Prefs.SHOW_RECONNECT_ALWAYS, this._setDevicesReconnectVisibility.bind(this));
             }
         }
     }
@@ -77,32 +77,31 @@ var WifiDisconnector = class WifiDisconnector{
             return;
         }
 
-        if(device.active_connection) {
+        if (device.active_connection) {
             this._activeConnections[device] = device.active_connection;
         }
 
-        if(device.active_access_point) {
+        if (device.active_access_point) {
             this._accessPoints[device] = device.active_access_point;
         }
         this._addAllMenus(device);
     }
 
     _addAllMenus(device) {
-        if (device)
-        {
+        if (device) {
             _l("Adding menu..");
 
             if (!device._delegate) {
                 _l("Device delegate not ready, waiting...");
-                if(!device.timeout) {
-                    device.timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000,  () => {this._addAllMenus(device)});
+                if (!device.timeout) {
+                    device.timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => { this._addAllMenus(device) });
                     return true;
                 } else {
                     return true;
                 }
             }
 
-            if(device.timeout) {
+            if (device.timeout) {
                 GLib.source_remove(device.timeout);
                 device.timeout = null;
             }
@@ -112,47 +111,48 @@ var WifiDisconnector = class WifiDisconnector{
 
             if (!wrapper.disconnectItem) {
                 wrapper.disconnectItem = menu.addAction(_("Disconnect"), () => device.disconnect(null));
-                menu.moveMenuItem(wrapper.disconnectItem,2);
+                menu.moveMenuItem(wrapper.disconnectItem, 2);
             }
             wrapper.disconnectItem.actor.visible = false;
 
             if (!wrapper.reconnectItem) {
-                wrapper.reconnectItem = menu.addAction(_(RECONNECT_TEXT), () => {this._reconnect(device);});
-                menu.moveMenuItem(wrapper.reconnectItem,3);
+                wrapper.reconnectItem = menu.addAction(_(RECONNECT_TEXT), () => { this._reconnect(device); });
+                menu.moveMenuItem(wrapper.reconnectItem, 3);
             }
 
             wrapper.reconnectItem.actor.visible = false;
 
-            this._stateChanged(device, device.state, device.state, null);   
+            this._stateChanged(device, device.state, device.state, null);
 
-            this._signalManager.addSignal(device, 'state-changed', this._stateChanged.bind(this));	        
+            this._signalManager.addSignal(device, 'state-changed', this._stateChanged.bind(this));
         }
         return false;
     }
 
     _reconnect(device) {
-        _l(device)
+        _l(device + "=Device")
 
-        if(this._RtimeoutId){
+        if (this._RtimeoutId) {
+            _l("Removing Timeout");
             GLib.source_remove(this._RtimeoutId);
             this._RtimeoutId = null;
         }
         _l(device.state);
 
-        if(device.state > NM.DeviceState.DISCONNECTED){
-            if(device.state != NM.DeviceState.DEACTIVATING && device.state != NM.DeviceState.DISCONNECTING) {
+        if (device.state > NM.DeviceState.DISCONNECTED) {
+            if (device.state != NM.DeviceState.DEACTIVATING && device.state != NM.DeviceState.DISCONNECTING) {
                 device.disconnect(null);
             }
-
-            this._RtimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => this._reconnect.bind(device));	                
+            _l("Adding Timeout");
+            this._RtimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => this._reconnect(device));
         }
         else {
             let _activeConnection = this._activeConnections[device];
 
             if (_activeConnection) {
-                this._client.activate_connection_async(_activeConnection.connection,device,null,null,null);
+                this._client.activate_connection_async(_activeConnection.connection, device, null, null, null);
             } else {
-                this._client.activate_connection_async(null,device ,null,null,null);
+                this._client.activate_connection_async(null, device, null, null, null);
             }
         }
     }
@@ -162,11 +162,11 @@ var WifiDisconnector = class WifiDisconnector{
             return;
         }
 
-        if(device.active_connection) {
+        if (device.active_connection) {
             this._activeConnections[device] = device.active_connection;
         }
 
-        if(device.active_access_point) {
+        if (device.active_access_point) {
             this._accessPoints[device] = device.active_access_point;
         }
 
@@ -176,8 +176,8 @@ var WifiDisconnector = class WifiDisconnector{
 
         let wrapper = device._delegate;
         if (wrapper.disconnectItem) {
-            wrapper.disconnectItem.actor.visible 
-            = newstate > NM.DeviceState.DISCONNECTED;
+            wrapper.disconnectItem.actor.visible
+                = newstate > NM.DeviceState.DISCONNECTED;
         }
 
         this._setReconnectVisibility(device, newstate);
@@ -190,24 +190,24 @@ var WifiDisconnector = class WifiDisconnector{
             let showReconnect = this._gsettings.get_boolean(Prefs.SHOW_RECONNECT_ALWAYS);
 
             let accessPoint = this._accessPoints[device];
-            wrapper.reconnectItem.label.text = 
-                (accessPoint) ?  _(RECONNECT_TEXT) + SPACE 
-                        + imports.ui.status.network.ssidToLabel(accessPoint.get_ssid()) : _(RECONNECT_TEXT) ;
+            wrapper.reconnectItem.label.text =
+                (accessPoint && accessPoint.get_ssid()) ? _(RECONNECT_TEXT) + SPACE
+                    + imports.ui.status.network.ssidToLabel(accessPoint.get_ssid()) : _(RECONNECT_TEXT);
 
-                        wrapper.reconnectItem.actor.visible 
-                        = (state == NM.DeviceState.DISCONNECTED || state == NM.DeviceState.DISCONNECTING ||showReconnect);
-        } 
+            wrapper.reconnectItem.actor.visible
+                = (state == NM.DeviceState.DISCONNECTED || state == NM.DeviceState.DISCONNECTING || showReconnect);
+        }
     }
 
     _deviceRemoved(client, device) {
         if (device.get_device_type() != NM.DeviceType.WIFI) {
             return;
         }
-        if(this._activeConnections && this._activeConnections[device]) {
+        if (this._activeConnections && this._activeConnections[device]) {
             this._activeConnections[device] = null;
         }
 
-        if(this._accessPoints && this._accessPoints[device]) {
+        if (this._accessPoints && this._accessPoints[device]) {
             this._accessPoints[device] = null;
         }
 
@@ -229,10 +229,10 @@ var WifiDisconnector = class WifiDisconnector{
         this._signalManager.disconnectBySource(device);
     }
 
-    _setDevicesReconnectVisibility()  {
+    _setDevicesReconnectVisibility() {
         if (this._network && this._network._nmDevices) {
             for (let device of this._network._nmDevices) {
-                this._setReconnectVisibility(device, device.state);   
+                this._setReconnectVisibility(device, device.state);
             };
         }
     }
