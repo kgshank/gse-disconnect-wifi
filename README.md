@@ -23,6 +23,7 @@ rm -rf "gse-disconnect-wifi"
 Enable the extensions from [GNOME Tweaks](https://wiki.gnome.org/Apps/Tweaks).
 
 ### Gnome shell versions compatible
+* 41
 * 40
 * 3.38
 * 3.36
