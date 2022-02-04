@@ -5,7 +5,8 @@
         "3.36",
         "3.38",
         "40",
-        "41"
+        "41",
+        "42"
     ], 
     "uuid": "disconnect-wifi@kgshank.net", 
     "name": "Disconnect Wifi", 
