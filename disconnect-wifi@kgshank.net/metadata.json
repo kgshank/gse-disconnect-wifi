@@ -9,9 +9,10 @@
     "3.36",
     "3.38",
     "40",
-    "41"
+    "41",
+    "42"
   ],
   "url": "https://github.com/kgshank/gse-disconnect-wifi",
   "uuid": "disconnect-wifi@kgshank.net",
-  "version": 30
+  "version": 31
 }
