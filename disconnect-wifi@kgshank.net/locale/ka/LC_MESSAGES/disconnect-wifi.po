@@ -1,0 +1,27 @@
+# Georgian translation for disconnect-wifi.
+# Copyright (C) 2023, disconnect-wifi's authors.
+# This file is distributed under the same license as the disconnect-wifi package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: disconnect-wifi\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-11-02 23:45+0800\n"
+"PO-Revision-Date: 2023-02-22 07:01+0100\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <(nothing)>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#: extension.js:99
+msgid "Disconnect"
+msgstr "გათიშვა"
+
+#: extension.js:156 extension.js:157
+msgid "Reconnect"
+msgstr "თავიდან დაკავშირება"
