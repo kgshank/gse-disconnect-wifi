@@ -19,6 +19,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import NM from 'gi://NM';
 import GLib from 'gi://GLib';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import {_log as _l, dump as _d, SignalManager} from './convenience.js';
 //import * as Prefs from './prefs.js';
 
@@ -125,8 +126,15 @@ export default class WifiDisconnector extends Extension {
         this.section = new PopupMenu.PopupMenuSection();
         this._mainSection.addMenuItem(this.section);
 */
-        _d(device)
-            device._mainSection.addMenuItem('Menu Item', () => console.log('activated'));
+        var menuItem = this._network._wirelessToggle._items.get(device)
+        _l(menuItem.name + menuItem._useSubmenu)
+        //_d(menuItem)
+        //menuItem.section.addMenuItem('Menu Item', () => console.log('activated'));
+        var section2 = new PopupMenu.PopupMenuSection();
+        menuItem._mainSection.box.add_child(section2.actor);
+        section2.addAction('Menu Item', () => console.log('activated'));
+        _l("Addied menu..");
+
             return;
             let wrapper = device._delegate;
             let menu = wrapper.item.menu;
