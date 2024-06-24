@@ -15,43 +15,47 @@
  * Original Author: Gopi Sankar Karmegam
  ******************************************************************************/
 
-const Main = imports.ui.main;
-const { NM, GLib } = imports.gi;
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+import NM from 'gi://NM';
+import GLib from 'gi://GLib';
+import {_log as _l, dump as _d, SignalManager} from './convenience.js';
+//import * as Prefs from './prefs.js';
 
-const Me = imports.misc.extensionUtils.getCurrentExtension();
-const Convenience = Me.imports.convenience;
-const SignalManager = Convenience.SignalManager;
-const Prefs = Me.imports.prefs;
-const _l = Convenience._log
-const _d = Convenience.dump
+//const _l = Convenience._log
+//const _d = Convenience.dump
 
 const Gettext = imports.gettext.domain('disconnect-wifi');
 const _ = Gettext.gettext;
 
-function init() {
-    Convenience.initTranslations("disconnect-wifi");
-}
 
 const RECONNECT_TEXT = "Reconnect"
 const SPACE = " ";
 
-var WifiDisconnector = class WifiDisconnector {
-    constructor() {
+export default class WifiDisconnector extends Extension {
+    enable() {
         this._nAttempts = 0;
         this._signalManager = new SignalManager();
         this._activeConnections = {};
         this._accessPoints = {};
-        this._gsettings = Convenience.getSettings(Prefs.SETTINGS_SCHEMA);
+        this._gsettings =  this.getSettings();
         // Note: Make sure don't initialize anything after this
-        this._checkDevices();
+        this._checkDevices().catch(error =>
+            logError(error, 'Failed to setup quick settings'));
+;
     }
 
-    _checkDevices() {
+    async _checkDevices() {
         if (this._timeoutId) {
             GLib.source_remove(this._timeoutId);
             this._timeoutId = null;
         }
-        this._network = Main.panel.statusArea.aggregateMenu._network;
+        _l("Check Devices")
+        await import('resource:///org/gnome/shell/ui/status/network.js');
+        //const Main = await import('resource:///org/gnome/shell/ui/main.js');
+        this._network = Main.panel.statusArea.quickSettings._network;
+        _l(this._network._client)
+        //_d(Main.panel.statusArea.quickSettings._indicators)
         if (this._network) {
             if (!this._network._client) {
                 // Shell not initialized completely wait for max of
@@ -62,12 +66,13 @@ var WifiDisconnector = class WifiDisconnector {
             } else {
                 this._client = this._network._client;
 
-                for (let device of this._network._nmDevices) {
+                _l(this._network._wirelessToggle)
+                for (let device of this._network._wirelessToggle._nmDevices) {
                     this._deviceAdded(this._client, device);
                 }
                 this._signalManager.addSignal(this._client, 'device-added', this._deviceAdded.bind(this));
                 this._signalManager.addSignal(this._client, 'device-removed', this._deviceRemoved.bind(this));
-                this._signalManager.addSignal(this._gsettings, "changed::" + Prefs.SHOW_RECONNECT_ALWAYS, this._setDevicesReconnectVisibility.bind(this));
+                ///this._signalManager.addSignal(this._gsettings, "changed::" + Prefs.SHOW_RECONNECT_ALWAYS, this._setDevicesReconnectVisibility.bind(this));
             }
         }
     }
@@ -91,6 +96,7 @@ var WifiDisconnector = class WifiDisconnector {
         if (device) {
             _l("Adding menu..");
 
+            /*
             if (!device._delegate) {
                 _l("Device delegate not ready, waiting...");
                 if (!device.timeout) {
@@ -104,8 +110,24 @@ var WifiDisconnector = class WifiDisconnector {
             if (device.timeout) {
                 GLib.source_remove(device.timeout);
                 device.timeout = null;
-            }
+            }*/
 
+            //device.section.addMenuItem//
+
+            /*
+            this._mainSection = new PopupMenu.PopupMenuSection();
+        this.add_child(this._mainSection.actor);
+
+        this._submenuItem = new PopupMenu.PopupSubMenuMenuItem('', true);
+        this._mainSection.addMenuItem(this._submenuItem);
+        this._submenuItem.hide();
+
+        this.section = new PopupMenu.PopupMenuSection();
+        this._mainSection.addMenuItem(this.section);
+*/
+        _d(device)
+            device._mainSection.addMenuItem('Menu Item', () => console.log('activated'));
+            return;
             let wrapper = device._delegate;
             let menu = wrapper.item.menu;
 
@@ -237,7 +259,7 @@ var WifiDisconnector = class WifiDisconnector {
         }
     }
 
-    destroy() {
+    disable() {
         if (this._network && this._network._nmDevices) {
             for (let device of this._network._nmDevices) {
                 this._stateChanged(device, device.state, device.state, "");
@@ -246,14 +268,3 @@ var WifiDisconnector = class WifiDisconnector {
         this._signalManager.disconnectAll();
     }
 };
-
-let _instance;
-function enable() {
-    _instance = new WifiDisconnector();
-}
-
-function disable() {
-    _instance.destroy();
-    _instance = null;
-}
-

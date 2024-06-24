@@ -22,19 +22,12 @@ const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
 const Lang = imports.lang;
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
-const Lib = Me.imports.convenience;
-const SignalManager = Lib.SignalManager;
+//import {_log as _l, dump as _d, SignalManager} from './convenience.js';
 
 var SETTINGS_SCHEMA = "org.gnome.shell.extensions.disconnect-wifi";
 var SHOW_RECONNECT_ALWAYS = "show-reconnect-always";
 
-const _l = Lib._log;
-
-function init() {
-}
-
+/*
 const DWifiSettingsWidget = new GObject.Class({
     Name : 'DWifi.Prefs.Widget',
     GTypeName : 'DWifiSettingsWidget',
@@ -56,7 +49,7 @@ const DWifiSettingsWidget = new GObject.Class({
         this.spacing = 0;
 
         // creates the settings
-        this._settings = Lib.getSettings(SETTINGS_SCHEMA);
+        this._settings = Convenience.getSettings(SETTINGS_SCHEMA);
 
         // creates the ui builder and add the main resource file
         let uiFilePath = Me.path + "/ui/dwifi-prefs-dialog" +uiFileSuffix +".glade";
@@ -95,3 +88,4 @@ function buildPrefsWidget() {
 
     return _settingsWidget;
 }
+*/

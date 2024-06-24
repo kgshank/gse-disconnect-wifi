@@ -15,11 +15,10 @@
  * Original Author: Gopi Sankar Karmegam
  ******************************************************************************/
 
-const Gettext = imports.gettext;
-const Gio = imports.gi.Gio;
-const GObject = imports.gi.GObject;
-const Config = imports.misc.config;
-const ExtensionUtils = imports.misc.extensionUtils;
+//import Gio from 'gi://Gio';
+import GObject from 'gi://GObject';
+//import Config from 'resource:///org/gnome/shell/misc/config.js';
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
 var DEBUG = true;
 
@@ -32,7 +31,7 @@ const _logWrap = (log != undefined)?log:global.log;
  * 
  * Initialize Gettext to load translations from extensionsdir/locale. If
  * @domain is not provided, it will be taken from metadata['gettext-domain']
- */
+ *
 function initTranslations(domain) {
     let extension = ExtensionUtils.getCurrentExtension();
 
@@ -74,9 +73,9 @@ function getSettings(schema) {
                 + extension.metadata.uuid + '. Please check your installation.');
 
     return new Gio.Settings({ settings_schema: schemaObj });
-}
+}*/
 
-var Signal =  class Signal{
+export class Signal{
 
     constructor(signalSource, signalName, callback) {
         this._signalSource = signalSource;
@@ -96,7 +95,7 @@ var Signal =  class Signal{
     }
 }
 
-var SignalManager = class SignalManager {
+export class SignalManager {
 
     constructor() {
         this._signals = [];
@@ -135,13 +134,13 @@ function setLog(value) {
     DEBUG = value;
 }
 
-function _log(msg) {
+export function _log(msg) {
     if ( DEBUG == true ) {
         _logWrap("DWifi Debug: " + msg);
     }
 }
 
-function dump(obj) {
+export function dump(obj) {
     var propValue;
     for(var propName in obj) {
         try{		    
