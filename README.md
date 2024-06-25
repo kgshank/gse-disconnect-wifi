@@ -23,13 +23,8 @@ rm -rf "gse-disconnect-wifi"
 Enable the extensions from [GNOME Tweaks](https://wiki.gnome.org/Apps/Tweaks).
 
 ### Gnome shell versions compatible
-* 41
-* 40
-* 3.38
-* 3.36
-* 3.34
-* 3.32
-* For older versions install from [extensions.gnome.org](https://extensions.gnome.org/extension/904/disconnect-wifi/).
+* 46
+* For older versions install from [extensions.gnome.org](https://extensions.gnome.org/extension/904/disconnect-wifi/) or use git branch `gnome42`
 
 ### [Change log](CHANGELOG.md)
 
