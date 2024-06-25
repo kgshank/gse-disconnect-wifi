@@ -5,18 +5,18 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-20 20:00-0300\n"
-"PO-Revision-Date: 2015-05-20 20:00+0100\n"
-"Last-Translator: Gopi Sankar Karmegam <gopi@gopi>\n"
+"PO-Revision-Date: 2024-06-25 21:19+0200\n"
+"Last-Translator: Gopi Sankar Karmegam\n"
 "Language-Team: \n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.7.4\n"
+"X-Generator: Poedit 3.4.2\n"
 
 #: extension.js:79
 msgid "Disconnect"
