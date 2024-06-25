@@ -25,7 +25,7 @@ const Lang = imports.lang;
 //import {_log as _l, dump as _d, SignalManager} from './convenience.js';
 
 var SETTINGS_SCHEMA = "org.gnome.shell.extensions.disconnect-wifi";
-var SHOW_RECONNECT_ALWAYS = "show-reconnect-always";
+export var SHOW_RECONNECT_ALWAYS = "show-reconnect-always";
 
 /*
 const DWifiSettingsWidget = new GObject.Class({

@@ -17,6 +17,7 @@
 
 //import Gio from 'gi://Gio';
 import GObject from 'gi://GObject';
+import NM from 'gi://NM';
 //import Config from 'resource:///org/gnome/shell/misc/config.js';
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 
@@ -84,7 +85,7 @@ export class Signal{
     }
 
     connect(){
-        this._signalId = this._signalSource.connect(this._signalName, this._signalCallback);
+        this._signalId = this._signalSource.connectObject(this._signalName, this._signalCallback);
     }
 
     disconnect() {
@@ -150,3 +151,11 @@ export function dump(obj) {
         catch(e){_log(propName + "!!!Error!!!");}
     } 
 }
+
+export function ssidToLabel(ssid) {
+    let label = NM.utils_ssid_to_utf8(ssid.get_data());
+    if (!label)
+        label = _('<unknown>');
+    return label;
+}
+
