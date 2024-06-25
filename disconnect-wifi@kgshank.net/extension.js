@@ -16,53 +16,95 @@
  ******************************************************************************/
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import NM from 'gi://NM';
 import GLib from 'gi://GLib';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import {_log as _l, dump as _d, SignalManager, ssidToLabel} from './convenience.js';
+import { _log as _l, dump as _d, SignalManager, ssidToLabel } from './convenience.js';
 import * as Prefs from './prefs.js';
-//import * as Network from 'resource:///org/gnome/shell/ui/status/network.js'
-//const Network = await import('resource:///org/gnome/shell/ui/status/network.js');
-
-//const _l = Convenience._log
-//const _d = Convenience.dump
+import Gio from 'gi://Gio';
 
 const Gettext = imports.gettext.domain('disconnect-wifi');
 const _ = Gettext.gettext;
 
-
 const RECONNECT_TEXT = "Reconnect"
 const SPACE = " ";
+
+const ADD_TIMEOUT_KEY = "ADD_DEVICE"
+const RECONNECT_TIMEOUT_KEY = "RECONNECT_DEVICE"
+
+class WifiDevice {
+    constructor(device, client) {
+        _l("WifiDevice constructor")
+        this.device = device;
+        this.client = client;
+        this.activeConnection = device.active_connection;
+        this.accessPoint = device.active_access_point;
+        this.timeOuts = new Map();
+        this.uiItem = new PopupMenu.PopupMenuSection();
+        
+        this.uiItem.disconnectItem = this.uiItem.addAction(_("Disconnect"), () => device.disconnect(null));
+        //this.uiItem.moveMenuItem(this.uiItem.disconnectItem, 2);
+        this.uiItem.disconnectItem.actor.visible = false;
+
+        this.uiItem.reconnectItem = this.uiItem.addAction(_(RECONNECT_TEXT), () => { this._reconnect(); });
+        //this.uiItem.moveMenuItem(this.uiItem.reconnectItem, 3);
+        this.uiItem.reconnectItem.actor.visible = false;
+    }
+
+    _reconnect() {
+        _l("Reconnect the device.." + this.device.get_permanent_hw_address())
+
+        if (this.timeOuts.get(RECONNECT_TIMEOUT_KEY)) {
+            _l("Removing Timeout");
+            GLib.source_remove(this.timeOuts.get(RECONNECT_TIMEOUT_KEY));
+            this.timeOuts.delete(RECONNECT_TIMEOUT_KEY)
+        }
+
+        if (this.device.state > NM.DeviceState.DISCONNECTED) {
+            if (this.device.state != NM.DeviceState.DEACTIVATING && this.device.state != NM.DeviceState.DISCONNECTING) {
+                this.device.disconnect(null);
+            }
+            _l("Adding Timeout");
+            this.timeOuts.set(RECONNECT_TIMEOUT_KEY, GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => this._reconnect()))
+        }
+        else {
+            var connection = this.activeConnection?.connection || null;
+            this.client.activate_connection_async(connection, this.device, null, null, null);
+        }
+    }
+
+    destroy(){
+        this.timeOuts.forEach(GLib.source_remove);
+        this.uiItem.destroy();                
+    }
+}
 
 export default class WifiDisconnector extends Extension {
     enable() {
         this._nAttempts = 0;
         this._signalManager = new SignalManager();
-        this._activeConnections = {};
-        this._accessPoints = {};
-        this._gsettings =  this.getSettings();
+        this._gsettings = this.getSettings();
+        this._devices = new Map();
         // Note: Make sure don't initialize anything after this
-        import('resource:///org/gnome/shell/ui/status/network.js').then(this._checkDevices.bind(this)).catch(error =>
-            logError(error, 'Failed to setup quick settings'));
-        /*
-        this._checkDevices().catch(error =>
-            logError(error, 'Failed to setup quick settings'));
-*/
+        (async () => {
+            try {
+                await import('resource:///org/gnome/shell/ui/status/network.js')
+                this._checkDevices();
+            }
+            catch (error) {
+                _l(error)
+            }
+        })();
     }
 
-    //async _checkDevices() {
     _checkDevices() {
         if (this._timeoutId) {
             GLib.source_remove(this._timeoutId);
-            this._timeoutId = null;
+            delete this._timeoutId;
         }
         _l("Check Devices")
-        //await import('resource:///org/gnome/shell/ui/status/network.js');
-        //const Main = await import('resource:///org/gnome/shell/ui/main.js');
         this._network = Main.panel.statusArea.quickSettings._network;
-        _l(this._network._client)
-        //_d(Main.panel.statusArea.quickSettings._indicators)
         if (this._network) {
             if (!this._network._client) {
                 // Shell not initialized completely wait for max of
@@ -71,12 +113,11 @@ export default class WifiDisconnector extends Extension {
                     this._timeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, this._checkDevices.bind(this));
                 }
             } else {
+                _l(this._network._client)
                 this._client = this._network._client;
-
+                this._wirelessToggle = this._network._wirelessToggle
                 _l(this._network._wirelessToggle)
-                for (let device of this._network._wirelessToggle._nmDevices) {
-                    this._deviceAdded(this._client, device);
-                }
+                this._wirelessToggle._nmDevices.forEach((device) => this._deviceAdded(this._client, device));
                 this._signalManager.addSignal(this._client, 'device-added', this._deviceAdded.bind(this));
                 this._signalManager.addSignal(this._client, 'device-removed', this._deviceRemoved.bind(this));
                 this._signalManager.addSignal(this._gsettings, "changed::" + Prefs.SHOW_RECONNECT_ALWAYS, this._setDevicesReconnectVisibility.bind(this));
@@ -85,210 +126,124 @@ export default class WifiDisconnector extends Extension {
     }
 
     _deviceAdded(client, device) {
+        _l("Adding the device.." + device.get_permanent_hw_address())
         if (device.get_device_type() != NM.DeviceType.WIFI) {
             return;
         }
 
-        if (device.active_connection) {
-            this._activeConnections[device] = device.active_connection;
+        var _myDevice = this._getWifiDevice(device);
+        if(device.active_connection) {
+            _myDevice.activeConnection = device.active_connection;
         }
-
-        if (device.active_access_point) {
-            this._accessPoints[device] = device.active_access_point;
+           
+        if(device.active_access_point) {
+            _myDevice.accessPoint = device.active_access_point;
         }
-        this._addAllMenus(device);
+        this._addAllMenus(_myDevice);
     }
 
-    _addAllMenus(device) {
-        if (device) {
-            _l("Adding menu..");
-
-            /*
-            if (!device._delegate) {
-                _l("Device delegate not ready, waiting...");
-                if (!device.timeout) {
-                    device.timeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => { this._addAllMenus(device) });
-                    return true;
-                } else {
-                    return true;
-                }
-            }
-
-            if (device.timeout) {
-                GLib.source_remove(device.timeout);
-                device.timeout = null;
-            }*/
-
-            //device.section.addMenuItem//
-
-            /*
-            this._mainSection = new PopupMenu.PopupMenuSection();
-        this.add_child(this._mainSection.actor);
-
-        this._submenuItem = new PopupMenu.PopupSubMenuMenuItem('', true);
-        this._mainSection.addMenuItem(this._submenuItem);
-        this._submenuItem.hide();
-
-        this.section = new PopupMenu.PopupMenuSection();
-        this._mainSection.addMenuItem(this.section);
-*/
-            var menuItem = this._network._wirelessToggle._items.get(device)
-            _l(menuItem.name + menuItem._useSubmenu)
-            //_d(menuItem)
-            //menuItem.section.addMenuItem('Menu Item', () => console.log('activated'));
-            var section2 = new PopupMenu.PopupMenuSection();
-            menuItem._mainSection.box.add_child(section2.actor);
-            //section2.addAction('Menu Item', () => console.log('activated'));
-            _l("Addied menu..");
-            _l(device)
-
-            let menu = section2;
-
-            if (!menuItem.disconnectItem) {
-                menuItem.disconnectItem = menu.addAction(_("Disconnect"), () => device.disconnect(null));
-                //menu.moveMenuItem(menuItem.disconnectItem, 2);
-            }
-            menuItem.disconnectItem.actor.visible = false;
-
-            if (!menuItem.reconnectItem) {
-                menuItem.reconnectItem = menu.addAction(_(RECONNECT_TEXT), () => { this._reconnect(device); });
-                //menu.moveMenuItem(menuItem.reconnectItem, 3);
-            }
-
-            menuItem.reconnectItem.actor.visible = false;
-
-            this._stateChanged(device, device.state, device.state, null);
-
-            this._signalManager.addSignal(device, 'state-changed', this._stateChanged.bind(this));
-        }
-        return false;
+    _getWifiMenuItem(device) {
+        return this._network._wirelessToggle._items.get(device)
     }
 
-    _reconnect(device) {
-        _l(device + "=Device")
-
-        if (this._RtimeoutId) {
-            _l("Removing Timeout");
-            GLib.source_remove(this._RtimeoutId);
-            this._RtimeoutId = null;
+    _getWifiDevice(device, createNewOnNull = true) {
+        var _myDevice = this._devices.get(device);
+        if (!_myDevice && createNewOnNull) {
+            _myDevice = new WifiDevice(device, this._client);
+            this._devices.set(device, _myDevice);
         }
-        _l(device.state);
 
-        if (device.state > NM.DeviceState.DISCONNECTED) {
-            if (device.state != NM.DeviceState.DEACTIVATING && device.state != NM.DeviceState.DISCONNECTING) {
-                device.disconnect(null);
-            }
-            _l("Adding Timeout");
-            this._RtimeoutId = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => this._reconnect(device));
-        }
-        else {
-            let _activeConnection = this._activeConnections[device];
+        return _myDevice;
+    }
 
-            if (_activeConnection) {
-                this._client.activate_connection_async(_activeConnection.connection, device, null, null, null);
-            } else {
-                this._client.activate_connection_async(null, device, null, null, null);
-            }
+    _addAllMenus(_myDevice) {
+        if (!_myDevice) {
+            return;
         }
+
+        if (_myDevice.timeOuts.get(ADD_TIMEOUT_KEY)) {
+            _l("Removing device add Timeout");
+            GLib.source_remove(_myDevice.timeOuts.get(ADD_TIMEOUT_KEY));
+            _myDevice.timeOuts.delete(ADD_TIMEOUT_KEY)
+        }
+
+        _l("Adding menu..");
+        var menuItem = this._getWifiMenuItem(_myDevice.device);
+        if (!menuItem) {
+            _l("Adding Timeout for new device");
+            _myDevice.timeOuts.set(ADD_TIMEOUT_KEY, GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => this._addAllMenus(_myDevice)))
+            return;
+        }
+        _l(menuItem.name + "---" + menuItem._useSubmenu + "---" + menuItem.get_vertical())
+        menuItem.set_vertical(true)
+        menuItem.add_child(_myDevice.uiItem.actor);
+
+        this._stateChanged(_myDevice.device, _myDevice.device.state, _myDevice.device.state, undefined);
+
+        this._signalManager.addSignal(_myDevice.device, 'state-changed', this._stateChanged.bind(this));
     }
 
     _stateChanged(device, newstate, oldstate, reason) {
-        _l(device + "---" + newstate + "---" + oldstate + "---" + reason)
+        _l(device.get_device_type() + "---" + newstate + "---" + oldstate + "---" + reason)
         if (device.get_device_type() != NM.DeviceType.WIFI) {
-            _l("Return :" +1)
+            _l("Return :" + 1)
             return;
         }
 
-        if (device.active_connection) {
-            this._activeConnections[device] = device.active_connection;
+        var _myDevice = this._getWifiDevice(device)
+
+        if(device.active_connection) {
+            _myDevice.activeConnection = device.active_connection;
+        }
+           
+        if(device.active_access_point) {
+            _myDevice.accessPoint = device.active_access_point;
         }
 
-        if (device.active_access_point) {
-            this._accessPoints[device] = device.active_access_point;
-        }
+        _myDevice.uiItem.disconnectItem.actor.visible = newstate > NM.DeviceState.DISCONNECTED;
 
-        var menuItem = this._network._wirelessToggle._items.get(device)
-
-        if (!menuItem) {
-            _l("Return :" +2)
-            return;
-        }
-
-        if (menuItem.disconnectItem) {
-            menuItem.disconnectItem.actor.visible
-                = newstate > NM.DeviceState.DISCONNECTED;
-                _l("Return :" + 4 + (newstate > NM.DeviceState.DISCONNECTED))
-        }
-        else {
-            _l("Return :" +3)
-        }
-
-        this._setReconnectVisibility(device, newstate);
+        this._setReconnectVisibility(_myDevice, newstate);
     }
 
-    _setReconnectVisibility(device, state) {
+    _setReconnectVisibility(_myDevice, state) {
         _l("Device Current State: " + state);
-        var menuItem = this._network._wirelessToggle._items.get(device)
-        if (menuItem.reconnectItem) {
-            
-            let showReconnect = this._gsettings.get_boolean(Prefs.SHOW_RECONNECT_ALWAYS);
 
-            let accessPoint = this._accessPoints[device];
-            menuItem.reconnectItem.label.text =
-                (accessPoint && accessPoint.get_ssid()) ? _(RECONNECT_TEXT) + SPACE
-                    + ssidToLabel(accessPoint.get_ssid()) : _(RECONNECT_TEXT);
+        let showReconnect = this._gsettings.get_boolean(Prefs.SHOW_RECONNECT_ALWAYS);
 
-                    menuItem.reconnectItem.actor.visible
-                = (state == NM.DeviceState.DISCONNECTED || state == NM.DeviceState.DISCONNECTING || showReconnect);
-                
-        }
+        _l(_myDevice.accessPoint);
+        _l(_myDevice.device.accessPoint);
+        _myDevice.uiItem.reconnectItem.label.text =
+            (_myDevice.accessPoint && _myDevice.accessPoint.get_ssid()) ? _(RECONNECT_TEXT) + SPACE
+                + ssidToLabel(_myDevice.accessPoint.get_ssid()) : _(RECONNECT_TEXT);
+
+        _myDevice.uiItem.reconnectItem.actor.visible
+            = (state == NM.DeviceState.DISCONNECTED || state == NM.DeviceState.DISCONNECTING || showReconnect);
     }
 
     _deviceRemoved(client, device) {
+        _l("Removing the device.." + device.get_permanent_hw_address())
         if (device.get_device_type() != NM.DeviceType.WIFI) {
             return;
         }
-        if (this._activeConnections && this._activeConnections[device]) {
-            this._activeConnections[device] = null;
-        }
+        
+        this._removeDeviceUI(this._getWifiDevice(device, false))
+    }
 
-        if (this._accessPoints && this._accessPoints[device]) {
-            this._accessPoints[device] = null;
-        }
-
-        var menuItem = this._network._wirelessToggle._items.get(device)
-
-        if (!menuItem) {
+    _removeDeviceUI(_myDevice) {
+        if (!_myDevice) {
             return;
         }
-
-        if (menuItem.disconnectItem) {
-            menuItem.disconnectItem.destroy();
-            menuItem.disconnectItem = null;
-        }
-
-        if (menuItem.reconnectItem) {
-            menuItem.reconnectItem.destroy();
-            menuItem.reconnectItem = null;
-        }
-
-        this._signalManager.disconnectBySource(device);
+        this._getWifiMenuItem(_myDevice.device)?.set_vertical(false)
+        _myDevice.destroy();
+        this._signalManager.disconnectBySource(_myDevice.device);
     }
 
     _setDevicesReconnectVisibility() {
-        if (this._network && this._network._wirelessToggle._nmDevices) {
-            for (let device of this._network._wirelessToggle._nmDevices) {
-                this._setReconnectVisibility(device, device.state);
-            };
-        }
+        this._devices.forEach((_myDevice) => this._setReconnectVisibility(_myDevice, _myDevice.device.state));
     }
 
     disable() {
-        if (this._network && this._network._wirelessToggle._nmDevices) {
-            for (let device of this._network._wirelessToggle._nmDevices) {
-                this._stateChanged(device, device.state, device.state, "");
-            };
-        }
+        this._devices.forEach(this._removeDeviceUI.bind(this));
         this._signalManager.disconnectAll();
     }
 };
