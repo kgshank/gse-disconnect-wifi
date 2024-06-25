@@ -4,6 +4,11 @@
       <default>false</default>
       <summary>Preference to show the reconnect option always</summary>
       <description>Value set to false shows the reconnect option only when wifi device is not connected to any network</description>
-    </key>   
+    </key>
+    <key name="enable-debug" type="b">
+      <default>false</default>
+      <summary>Preference to print all the debug messages</summary>
+      <description>Value set to true prints the debug messages</description>
+    </key>
   </schema>
 </schemalist>

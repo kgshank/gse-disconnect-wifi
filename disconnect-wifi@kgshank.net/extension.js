@@ -16,16 +16,12 @@
  ******************************************************************************/
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
+import {Extension, gettext as _, ngettext, pgettext} from 'resource:///org/gnome/shell/extensions/extension.js';
 import NM from 'gi://NM';
 import GLib from 'gi://GLib';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
-import { _log as _l, dump as _d, SignalManager, ssidToLabel } from './convenience.js';
-import * as Prefs from './prefs.js';
-import Gio from 'gi://Gio';
-
-const Gettext = imports.gettext.domain('disconnect-wifi');
-const _ = Gettext.gettext;
+import { _log as _l, dump as _d, SignalManager, ssidToLabel, setLog } from './convenience.js';
+import * as Constants from './definitions.js';
 
 const RECONNECT_TEXT = "Reconnect"
 const SPACE = " ";
@@ -82,9 +78,10 @@ class WifiDevice {
 
 export default class WifiDisconnector extends Extension {
     enable() {
+        this._gsettings = this.getSettings();
+        setLog(this._gsettings.get_boolean(Constants.ENABLE_DEBUG))
         this._nAttempts = 0;
         this._signalManager = new SignalManager();
-        this._gsettings = this.getSettings();
         this._devices = new Map();
         // Note: Make sure don't initialize anything after this
         (async () => {
@@ -120,16 +117,18 @@ export default class WifiDisconnector extends Extension {
                 this._wirelessToggle._nmDevices.forEach((device) => this._deviceAdded(this._client, device));
                 this._signalManager.addSignal(this._client, 'device-added', this._deviceAdded.bind(this));
                 this._signalManager.addSignal(this._client, 'device-removed', this._deviceRemoved.bind(this));
-                this._signalManager.addSignal(this._gsettings, "changed::" + Prefs.SHOW_RECONNECT_ALWAYS, this._setDevicesReconnectVisibility.bind(this));
+                this._signalManager.addSignal(this._gsettings, "changed::" + Constants.SHOW_RECONNECT_ALWAYS, this._setDevicesReconnectVisibility.bind(this));
+                this._signalManager.addSignal(this._gsettings, "changed::" + Constants.ENABLE_DEBUG, () => setLog(this._gsettings.get_boolean(Constants.ENABLE_DEBUG)));
             }
         }
     }
 
     _deviceAdded(client, device) {
-        _l("Adding the device.." + device.get_permanent_hw_address())
         if (device.get_device_type() != NM.DeviceType.WIFI) {
             return;
         }
+
+        _l("Adding the device.." + device.get_permanent_hw_address())
 
         var _myDevice = this._getWifiDevice(device);
         if(device.active_connection) {
@@ -208,7 +207,7 @@ export default class WifiDisconnector extends Extension {
     _setReconnectVisibility(_myDevice, state) {
         _l("Device Current State: " + state);
 
-        let showReconnect = this._gsettings.get_boolean(Prefs.SHOW_RECONNECT_ALWAYS);
+        let showReconnect = this._gsettings.get_boolean(Constants.SHOW_RECONNECT_ALWAYS);
 
         _l(_myDevice.accessPoint);
         _l(_myDevice.device.accessPoint);
@@ -217,14 +216,14 @@ export default class WifiDisconnector extends Extension {
                 + ssidToLabel(_myDevice.accessPoint.get_ssid()) : _(RECONNECT_TEXT);
 
         _myDevice.uiItem.reconnectItem.actor.visible
-            = (state == NM.DeviceState.DISCONNECTED || state == NM.DeviceState.DISCONNECTING || showReconnect);
+            = (state > NM.DeviceState.UNAVAILABLE && (state == NM.DeviceState.DISCONNECTED || state == NM.DeviceState.DISCONNECTING || showReconnect));
     }
 
     _deviceRemoved(client, device) {
-        _l("Removing the device.." + device.get_permanent_hw_address())
         if (device.get_device_type() != NM.DeviceType.WIFI) {
             return;
         }
+        _l("Removing the device.." + device.get_permanent_hw_address())
         
         this._removeDeviceUI(this._getWifiDevice(device, false))
     }

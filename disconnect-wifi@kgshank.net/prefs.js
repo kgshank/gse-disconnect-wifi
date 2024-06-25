@@ -16,76 +16,53 @@
  ******************************************************************************/
 /* jshint moz:true */
 
-const GLib = imports.gi.GLib;
-const GObject = imports.gi.GObject;
-const Gio = imports.gi.Gio;
-const Gtk = imports.gi.Gtk;
-const Lang = imports.lang;
+import Gio from 'gi://Gio';
+import Gtk from 'gi://Gtk';
+import Adw from 'gi://Adw';
 
+import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
+import * as Constants from './definitions.js';
 //import {_log as _l, dump as _d, SignalManager} from './convenience.js';
 
 var SETTINGS_SCHEMA = "org.gnome.shell.extensions.disconnect-wifi";
-export var SHOW_RECONNECT_ALWAYS = "show-reconnect-always";
 
-/*
-const DWifiSettingsWidget = new GObject.Class({
-    Name : 'DWifi.Prefs.Widget',
-    GTypeName : 'DWifiSettingsWidget',
-    Extends : Gtk.Box,
 
-    _init : function(params) {
-        this.parent(params);
-        let uiFileSuffix = "";
-        if (Gtk.get_major_version() >= "4") {
-            uiFileSuffix = "40";
-            this.__addFn = this.append;
-            this.__showFn = this.show;
-        }
-        else {
-            this.__addFn = x => this.pack_start(x, true, true, 0);
-            this.__showFn = this.show_all;
-        }
-        this.orientation = Gtk.Orientation.VERTICAL;
-        this.spacing = 0;
+export default class DWifiPreferences extends ExtensionPreferences {
+    fillPreferencesWindow(window) {
+        // Create a preferences page, with a single group
+        const page = new Adw.PreferencesPage({
+            title: _('General'),
+            icon_name: 'dialog-information-symbolic',
+        });
+        window.add(page);
 
-        // creates the settings
-        this._settings = Convenience.getSettings(SETTINGS_SCHEMA);
+        const group = new Adw.PreferencesGroup({
+            title: _('Appearance'),
+            description: _('Configure the appearance of the extension'),
+        });
+        page.add(group);
 
-        // creates the ui builder and add the main resource file
-        let uiFilePath = Me.path + "/ui/dwifi-prefs-dialog" +uiFileSuffix +".glade";
-        let builder = new Gtk.Builder();
+        // Create a new preferences row
+        var row = new Adw.SwitchRow({
+            title: _('Show Reconnect option always'),
+            subtitle: _('Show the reconnect option even when a Wifi network is connected'),
+        });
+        group.add(row);
 
-        if (builder.add_from_file(uiFilePath) == 0) {
+        // Create a settings object and bind the row to the `show-indicator` key
+        window._settings = this.getSettings();
+        window._settings.bind(Constants.SHOW_RECONNECT_ALWAYS, row, 'active',
+            Gio.SettingsBindFlags.DEFAULT);
 
-            let label = new Gtk.Label({
-                label : _("Could not load the preferences UI file"),
-                vexpand : true
-            });
+        row = new Adw.SwitchRow({
+            title: _('Enable Debug'),
+            subtitle: _('Enable this option to show the debug messages'),
+        });
+        group.add(row);
 
-            this.__addFn(label);
-        } else {
-            _l('JS LOG:_UI file receive and load: ' + uiFilePath);
-
-            let mainContainer = builder.get_object("main-container");
-
-            this.__addFn(mainContainer);
-
-            this._signalManager = new SignalManager();
-
-            let showReconnectAlwaysSwitch = builder
-                    .get_object("show-reconnect-always");
-
-            this._settings.bind(SHOW_RECONNECT_ALWAYS,
-                    showReconnectAlwaysSwitch, "active",
-                    Gio.SettingsBindFlags.DEFAULT);
-        }
+        // Create a settings object and bind the row to the `show-indicator` key
+        window._settings = this.getSettings();
+        window._settings.bind(Constants.ENABLE_DEBUG, row, 'active',
+            Gio.SettingsBindFlags.DEFAULT);
     }
-});
-
-function buildPrefsWidget() {
-    let _settingsWidget = new DWifiSettingsWidget();
-    _settingsWidget.__showFn();
-
-    return _settingsWidget;
 }
-*/
