@@ -2,7 +2,7 @@
 <!DOCTYPE xml>
 <project default="create_zip" name="Package Extension">
 	<property name="extension.uid" value="disconnect-wifi@kgshank.net" />
-	<property name="dir.workspace" location=".."/>
+	<property name="dir.workspace" location="."/>
 	<property name="dir.target.dir" location="${dir.workspace}/dist/"/>
 	<property name="project-dir" location="${dir.workspace}/${extension.uid}"/>
 	<target name="create_dist">
