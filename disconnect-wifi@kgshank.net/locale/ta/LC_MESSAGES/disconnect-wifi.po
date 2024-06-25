@@ -1,25 +1,59 @@
-# Tamil translations for PACKAGE package.
-# Copyright (C) 2015 THE PACKAGE'S COPYRIGHT HOLDER
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
-# Gopi Sankar Karmegam <gopi@gopi>, 2015.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-10-16 20:00-0300\n"
-"PO-Revision-Date: 2016-10-16 20:00-0300\n"
-"Last-Translator: Gopi Sankar Karmegam <gopi@gopi>\n"
+"POT-Creation-Date: 2024-06-25 20:40+0200\n"
+"PO-Revision-Date: 2024-06-25 20:44+0200\n"
+"Last-Translator: Gopi Sankar Karmegam\n"
 "Language-Team: \n"
 "Language: ta\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 1.7.4\n"
+"X-Generator: Poedit 3.4.2\n"
 
+#: convenience.js:107
+msgid "<unknown>"
+msgstr "<தெரியவில்லை>"
+
+#: extension.js:42
 msgid "Disconnect"
 msgstr "துண்டி"
 
+#: extension.js:215
 msgid "Reconnect"
-msgstr "மீண்டும் இணை - "
+msgstr "மீண்டும் இணை -"
+
+#: prefs.js:34
+msgid "General"
+msgstr "பொது"
+
+#: prefs.js:40
+msgid "Appearance"
+msgstr "தோற்றம்"
+
+#: prefs.js:41
+msgid "Configure the appearance of the extension"
+msgstr "நீட்டிப்பின் தோற்றத்தை உள்ளமைக்கவும்"
+
+#: prefs.js:47
+msgid "Show Reconnect option always"
+msgstr "மீண்டும் இணைக்கும் விருப்பத்தை எப்போதும் காட்டு"
+
+#: prefs.js:48
+msgid "Show the reconnect option even when a Wifi network is connected"
+msgstr "வைஃபை நெட்வொர்க் இணைக்கப்பட்டிருந்தாலும், மீண்டும் இணைக்கும் விருப்பத்தைக் காட்டு"
+
+#: prefs.js:58
+msgid "Enable Debug"
+msgstr "பிழைத்திருத்த செய்திகளைக் காட்டு"
+
+#: prefs.js:59
+msgid "Enable this option to show the debug messages"
+msgstr "பிழைத்திருத்த செய்திகளைக் காட்ட இந்த விருப்பத்தை இயக்கவும்"

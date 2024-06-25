@@ -9,6 +9,6 @@
   "url": "https://github.com/kgshank/gse-disconnect-wifi",
   "uuid": "disconnect-wifi@kgshank.net",
   "version": 31,
-  "gettext-domain": "disconnect-wifi@kgshank.net",
+  "gettext-domain": "disconnect-wifi",
   "settings-schema": "org.gnome.shell.extensions.disconnect-wifi"
 }
