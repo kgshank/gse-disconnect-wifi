@@ -243,8 +243,7 @@ export default class WifiDisconnector extends Extension {
 
     disable() {
         if (this._timeoutId) {
-            GLib.source_remove(this._timeoutId);
-            delete this._timeoutId;
+            GLib.source_remove(this._timeoutId);            
         }
         this._devices.forEach(this._removeDeviceUI.bind(this));
         this._signalManager.disconnectAll();
