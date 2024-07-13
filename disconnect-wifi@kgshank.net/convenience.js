@@ -48,37 +48,31 @@ export class Signal{
 export class SignalManager {
 
     constructor() {
-        this._signals = [];
-        this._signalsBySource = {};
+        this._signalsBySource = new Map();
     }
 
     addSignal(signalSource, signalName, callback) {
-        let obj = null;
+        let obj = undefined;
         if(signalSource && signalName && callback) {
             obj = new Signal(signalSource, signalName, callback);
             obj.connect();
-            this._signals.push(obj);
-            if(!this._signalsBySource[signalSource]) {
-                this._signalsBySource[signalSource] = [];
+            
+            if(!this._signalsBySource.has(signalSource)) {
+                this._signalsBySource.set(signalSource, []);
             }
-            let item = this._signalsBySource[signalSource];
-            item.push(obj);
+            this._signalsBySource.get(signalSource).push(obj);
         }
         return obj;
     }
 
     disconnectAll() {
-        this._signals.forEach(function(obj) {obj.disconnect();});
+        this._signalsBySource.forEach(signals => signals.forEach(obj => obj.disconnect()));
     }
 
     disconnectBySource(signalSource) {
-        if(this._signalsBySource[signalSource]) {
-            let signalBySource = this._signalsBySource[signalSource];
-            signalBySource.forEach(function(obj) {obj.disconnect();});
-        }
+        this._signalsBySource.get(signalSource)?.forEach(obj => obj.disconnect());        
     }
 }
-
 
 export function setLog(value) {
     DEBUG = value;
@@ -107,4 +101,3 @@ export function ssidToLabel(ssid) {
         label = _('<unknown>');
     return label;
 }
-
