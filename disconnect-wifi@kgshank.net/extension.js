@@ -142,9 +142,9 @@ class WifiDevice {
         }
 
         _l("Adding DC menu..");
-        this.disconnectButton?.destroy();
+        this._disconnectButton?.destroy();
         
-        this.disconnectButton = new QuickSettingsItem({
+        this._disconnectButton = new QuickSettingsItem({
             //style_class: 'icon-button',
             style_class: 'button',
             can_focus: true,
@@ -154,10 +154,10 @@ class WifiDevice {
             label: _("Disconnect")
         });
         
-        apMenuItem.add_child(this.disconnectButton)
+        apMenuItem.add_child(this._disconnectButton)
         apMenuItem._label.y_align = Clutter.ActorAlign.CENTER
-        this.disconnectButton.connect('clicked', this._disconnectDevice.bind(this));  
-        this.disconnectButton.visible = false;  
+        this._disconnectButton.connect('clicked', this._disconnectDevice.bind(this));  
+        this._disconnectButton.visible = false;  
     }
 
     _disconnectDevice() {
@@ -203,11 +203,15 @@ class WifiDevice {
     }*/
 
     _sync(){
+        _l("Syncing")
         this._extDeviceMenuSection.disconnectItem.actor.visible = (this._device.state > NM.DeviceState.DISCONNECTED) && !this._extDeviceMenuSection.actor.get_parent()?.singleDeviceMode;
 
-        if(this.disconnectButton){
-            this.disconnectButton.visible = this._device.state > NM.DeviceState.DISCONNECTED;            
+        _l(this._disconnectButton)
+        if(this._disconnectButton){
+            this._disconnectButton.visible = this._device.state > NM.DeviceState.DISCONNECTED;            
         }
+        _l(this._disconnectButton?.visible)
+        
 
         this._setReconnectVisibility();
     }
@@ -217,7 +221,7 @@ class WifiDevice {
         this._timeOuts.forEach(GLib.source_remove);
         this._extDeviceMenuSection.destroy();  
 
-        this.disconnectButton?.destroy();              
+        this._disconnectButton?.destroy();              
     } 
 }
 

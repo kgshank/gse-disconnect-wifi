@@ -4,12 +4,11 @@
   "gettext-domain": "disconnect-wifi",
   "name": "Disconnect Wifi",
   "original-author": "GopI",
-  "session-modes": ["user", "unlock-dialog"],
   "settings-schema": "org.gnome.shell.extensions.disconnect-wifi",
   "shell-version": [
     "46"
   ],
   "url": "https://github.com/kgshank/gse-disconnect-wifi",
   "uuid": "disconnect-wifi@kgshank.net",
-  "version": 34
+  "version": 35
 }

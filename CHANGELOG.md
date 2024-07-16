@@ -3,7 +3,6 @@
 ### 34
 * Code cleanup
 * Disconnect option now shown on the connnected AP
-* Extension active in lock screen
 * If more than one devices are available, then old behaviour with a separate disconnect option is shown to reduce number of clicks
   
 ### 32,33
