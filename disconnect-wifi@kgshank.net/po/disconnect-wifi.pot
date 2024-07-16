@@ -1,14 +1,14 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
+# This file is distributed under the same license as the disconnect-wifi package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: disconnect-wifi\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-06-25 20:40+0200\n"
+"POT-Creation-Date: 2024-07-16 18:30+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,42 +17,39 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: convenience.js:107
-msgid "<unknown>"
-msgstr ""
-
-#: extension.js:42
-msgid "Disconnect"
-msgstr ""
-
-#: extension.js:215
-msgid "Reconnect"
-msgstr ""
-
-#: prefs.js:34
+#: disconnect-wifi@kgshank.net/prefs.js:34
 msgid "General"
 msgstr ""
 
-#: prefs.js:40
+#: disconnect-wifi@kgshank.net/prefs.js:40
 msgid "Appearance"
 msgstr ""
 
-#: prefs.js:41
+#: disconnect-wifi@kgshank.net/prefs.js:41
 msgid "Configure the appearance of the extension"
 msgstr ""
 
-#: prefs.js:47
+#: disconnect-wifi@kgshank.net/prefs.js:47
 msgid "Show Reconnect option always"
 msgstr ""
 
-#: prefs.js:48
+#: disconnect-wifi@kgshank.net/prefs.js:48
 msgid "Show the reconnect option even when a Wifi network is connected"
 msgstr ""
 
-#: prefs.js:58
+#: disconnect-wifi@kgshank.net/prefs.js:58
 msgid "Enable Debug"
 msgstr ""
 
-#: prefs.js:59
+#: disconnect-wifi@kgshank.net/prefs.js:59
 msgid "Enable this option to show the debug messages"
+msgstr ""
+
+#: disconnect-wifi@kgshank.net/convenience.js:101
+msgid "<unknown>"
+msgstr ""
+
+#: disconnect-wifi@kgshank.net/extension.js:95
+#: disconnect-wifi@kgshank.net/extension.js:154
+msgid "Disconnect"
 msgstr ""

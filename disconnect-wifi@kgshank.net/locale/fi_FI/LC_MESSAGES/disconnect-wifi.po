@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-11-02 23:45+0800\n"
+"POT-Creation-Date: 2024-07-16 18:30+0200\n"
 "PO-Revision-Date: 2024-06-25 21:19+0200\n"
 "Last-Translator: Gopi Sankar Karmegam\n"
 "Language-Team: \n"
@@ -18,10 +18,42 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.4.2\n"
 
-#: extension.js:99
+#: disconnect-wifi@kgshank.net/convenience.js:101
+msgid "<unknown>"
+msgstr ""
+
+#: disconnect-wifi@kgshank.net/prefs.js:40
+msgid "Appearance"
+msgstr ""
+
+#: disconnect-wifi@kgshank.net/prefs.js:41
+msgid "Configure the appearance of the extension"
+msgstr ""
+
+#: disconnect-wifi@kgshank.net/extension.js:95
+#: disconnect-wifi@kgshank.net/extension.js:154
 msgid "Disconnect"
 msgstr "Katkaise yhteys"
 
-#: extension.js:156 extension.js:157
-msgid "Reconnect"
-msgstr "Uudelleenyhdistä"
+#: disconnect-wifi@kgshank.net/prefs.js:58
+msgid "Enable Debug"
+msgstr ""
+
+#: disconnect-wifi@kgshank.net/prefs.js:59
+msgid "Enable this option to show the debug messages"
+msgstr ""
+
+#: disconnect-wifi@kgshank.net/prefs.js:34
+msgid "General"
+msgstr ""
+
+#: disconnect-wifi@kgshank.net/prefs.js:47
+msgid "Show Reconnect option always"
+msgstr ""
+
+#: disconnect-wifi@kgshank.net/prefs.js:48
+msgid "Show the reconnect option even when a Wifi network is connected"
+msgstr ""
+
+#~ msgid "Reconnect"
+#~ msgstr "Uudelleenyhdistä"

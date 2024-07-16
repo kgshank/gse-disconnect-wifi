@@ -2,7 +2,7 @@ INSTALL_DIR=~/.local/share/gnome-shell/extensions
 SRC_DIR=disconnect-wifi@kgshank.net
 LOCALE_SRC=$(shell find $(SRC_DIR) -regextype posix-extended -regex '.*\.(js|glade)' 2> /dev/null)
 LOCALE_DIR=$(SRC_DIR)/locale
-POT_FILE=$(SRC_DIR)/disconnect-wifi.pot
+POT_FILE=$(SRC_DIR)/po/disconnect-wifi.pot
 PO_FILES=$(wildcard $(LOCALE_DIR)/*/LC_MESSAGES/*.po)
 MO_FILES=$(PO_FILES:.po=.mo)
 
@@ -39,7 +39,7 @@ $(POT_FILE): $(LOCALE_SRC)
 	--keyword=P_:1c,2 \
 	--output=$@ \
 	--package-name=disconnect-wifi \
-	--sort-output \
+	--from-code=UTF-8 \
 	$^
 
 $(LOCALE_DIR)/%/LC_MESSAGES/disconnect-wifi.mo: $(LOCALE_DIR)/%/LC_MESSAGES/disconnect-wifi.po
