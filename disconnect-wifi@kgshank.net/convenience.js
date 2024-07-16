@@ -89,7 +89,7 @@ export function dump(obj) {
     for(var propName in obj) {
         try{		    
             propValue = obj[propName];
-            _log(propName + propValue);
+            _log(propName + ": " + propValue);
         }
         catch(e){_log(propName + "!!!Error!!!");}
     } 

@@ -4,6 +4,7 @@
   "gettext-domain": "disconnect-wifi",
   "name": "Disconnect Wifi",
   "original-author": "GopI",
+  "session-modes": ["user", "unlock-dialog"],
   "settings-schema": "org.gnome.shell.extensions.disconnect-wifi",
   "shell-version": [
     "46"
