@@ -34,7 +34,7 @@ export class Signal{
     }
 
     connect(){
-        this._signalId = this._signalSource.connectObject(this._signalName, this._signalCallback);
+        this._signalId = this._signalSource.connect(this._signalName, this._signalCallback);
     }
 
     disconnect() {

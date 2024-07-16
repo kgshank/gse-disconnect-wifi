@@ -100,6 +100,7 @@ class WifiDevice {
         
         nmDeviceMenuItem.set_vertical(true)
         nmDeviceMenuItem.add_child(this._extDeviceMenuSection.actor);
+        //this._extDeviceMenuSection.actor.connect("destroy", () => this._extDeviceMenuSection = undefined)
         this._signalManager.addSignal(nmDeviceMenuItem, 'notify::single-device-mode', this._sync.bind(this));
         this._signalManager.addSignal(this._device, 'state-changed', this._stateChanged.bind(this));
         this._signalManager.addSignal(this._device, 'notify::active-access-point', this._activeApChanged.bind(this))
@@ -190,12 +191,14 @@ class WifiDevice {
 
         _l(this.accessPoint);
         _l(this._device.accessPoint);
-        this._extDeviceMenuSection.reconnectItem.label.text =
-            (this.accessPoint && this.accessPoint.get_ssid()) ? _(RECONNECT_TEXT) + SPACE
-                + ssidToLabel(this.accessPoint.get_ssid()) : _(RECONNECT_TEXT);
+        if(this._extDeviceMenuSection){
+            this._extDeviceMenuSection.reconnectItem.label.text =
+                (this.accessPoint && this.accessPoint.get_ssid()) ? _(RECONNECT_TEXT) + SPACE
+                    + ssidToLabel(this.accessPoint.get_ssid()) : _(RECONNECT_TEXT);
 
-        this._extDeviceMenuSection.reconnectItem.actor.visible
+            this._extDeviceMenuSection.reconnectItem.actor.visible
             = (state > NM.DeviceState.UNAVAILABLE && (showReconnect || state == NM.DeviceState.DISCONNECTED || state == NM.DeviceState.DISCONNECTING ));
+        }
     }
 
     /*_setDevicesReconnectVisibility() {
@@ -204,7 +207,9 @@ class WifiDevice {
 
     _sync(){
         _l("Syncing")
-        this._extDeviceMenuSection.disconnectItem.actor.visible = (this._device.state > NM.DeviceState.DISCONNECTED) && !this._extDeviceMenuSection.actor.get_parent()?.singleDeviceMode;
+        if(this._extDeviceMenuSection){
+            this._extDeviceMenuSection.disconnectItem.actor.visible = (this._device.state > NM.DeviceState.DISCONNECTED) && !this._extDeviceMenuSection.actor.get_parent()?.singleDeviceMode;
+        }
 
         _l(this._disconnectButton)
         if(this._disconnectButton){
@@ -217,11 +222,12 @@ class WifiDevice {
     }
 
     destroy(){
+        _l("Destroying widgets...")
+        this._signalManager.disconnectAll();
         this._getWifiMenuItem(this._device)?.set_vertical(false)
         this._timeOuts.forEach(GLib.source_remove);
-        this._extDeviceMenuSection.destroy();  
-
-        this._disconnectButton?.destroy();              
+        this._extDeviceMenuSection.destroy();
+        this._disconnectButton?.destroy();        
     } 
 }
 
@@ -272,16 +278,6 @@ export default class WifiDisconnector extends Extension {
         }
     }
 
-    _deviceAdded(client, device) {
-        if (device.get_device_type() != NM.DeviceType.WIFI) {
-            return;
-        }
-
-        _l("Adding the device.." + device.get_permanent_hw_address())
-
-        this._getWifiDevice(device, true);       
-    }    
-
     _getWifiDevice(device, createNewOnNull = true) {
         var _myDevice = this._devices.get(device);
         if (!_myDevice && createNewOnNull) {
@@ -292,12 +288,42 @@ export default class WifiDisconnector extends Extension {
         return _myDevice;
     }
 
+    _deviceAdded(client, device) {
+        if (device.get_device_type() != NM.DeviceType.WIFI) {
+            return;
+        }
+
+        _l("Adding the device.." + device.get_permanent_hw_address())
+
+        this._getWifiDevice(device, true);
+        this._signalManager.addSignal(device, 'state-changed', this._stateChanged.bind(this));
+    }    
+
+    _stateChanged(device, newstate, oldstate, reason) {
+        _l(device.get_permanent_hw_address() + "---" + newstate + "---" + oldstate + "---"+ device.state+ "---" + reason)
+        if (device.get_device_type() != NM.DeviceType.WIFI) {
+            _l("Return :" + 1)
+            return;
+        }
+
+        //Device turned off, when enabled new UI will be created, remove our old references
+        if(newstate <=  NM.DeviceState.UNAVAILABLE){
+            this._removeDeviceUI(this._getWifiDevice(device, false))
+        }
+        else if(newstate >= NM.DeviceState.DISCONNECTED){
+            _l("Re Adding the device, if not present." + device.get_permanent_hw_address())
+
+        this._getWifiDevice(device, true);
+        }
+    }
+
     _deviceRemoved(client, device) {
         if (device.get_device_type() != NM.DeviceType.WIFI) {
             return;
         }
         _l("Removing the device.." + device.get_permanent_hw_address())
         
+        this._signalManager.disconnectBySource(device);
         this._removeDeviceUI(this._getWifiDevice(device, false))
     }
 
@@ -305,9 +331,9 @@ export default class WifiDisconnector extends Extension {
         if (!_myDevice) {
             return;
         }
-        
+        _l("Removing device ui as its deactivated")
+        this._devices.delete(_myDevice._device);
         _myDevice.destroy();
-        this._signalManager.disconnectBySource(_myDevice.device);
     }    
 
     disable() {
@@ -315,7 +341,7 @@ export default class WifiDisconnector extends Extension {
         if (this._timeoutId) {
             GLib.source_remove(this._timeoutId);            
         }
-        this._devices.forEach(this._removeDeviceUI.bind(this));
+        [...this._devices.keys()].forEach((d) => this._deviceRemoved(this._client, d));
         this._signalManager.disconnectAll();
     }
 };
