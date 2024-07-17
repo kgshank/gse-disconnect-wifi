@@ -1,6 +1,6 @@
 ### Change log
 -----------------------
-### 34
+### 34,35
 * Code cleanup
 * Disconnect option now shown on the connnected AP
 * If more than one devices are available, then old behaviour with a separate disconnect option is shown to reduce number of clicks
