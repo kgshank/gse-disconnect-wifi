@@ -3,12 +3,12 @@
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
  * version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  * *****************************************************************************
@@ -42,11 +42,11 @@ class WifiDevice {
         this._activeConnection = _device.active_connection;
         //this.accessPoint = device.active_access_point;
         this._timeOuts = new Map();
-        
+
         this._signalManager = new SignalManager();
 
         this._extDeviceMenuSection = new PopupMenu.PopupMenuSection();
-                
+
         this._addAllMenus();
         this._signalManager.addSignal(this._gsettings, "changed::" + Constants.SHOW_RECONNECT_ALWAYS, this._setReconnectVisibility.bind(this));
     }
@@ -97,7 +97,7 @@ class WifiDevice {
 
         this._extDeviceMenuSection.reconnectItem = this._extDeviceMenuSection.addAction(_(RECONNECT_TEXT), this._reconnect.bind(this));
         this._extDeviceMenuSection.reconnectItem.actor.visible = false;
-        
+
         nmDeviceMenuItem.set_vertical(true)
         nmDeviceMenuItem.add_child(this._extDeviceMenuSection.actor);
         //this._extDeviceMenuSection.actor.connect("destroy", () => this._extDeviceMenuSection = undefined)
@@ -105,7 +105,6 @@ class WifiDevice {
         this._signalManager.addSignal(this._device, 'state-changed', this._stateChanged.bind(this));
         this._signalManager.addSignal(this._device, 'notify::active-access-point', this._activeApChanged.bind(this))
         this._activeApChanged()
-        this._stateChanged(this._device, this._device.state, this._device.state, undefined);
     }
 
     _activeApChanged(){
@@ -115,12 +114,19 @@ class WifiDevice {
             GLib.source_remove(this._timeOuts.get(AP_CHANGE_TIMEOUT_KEY));
             this._timeOuts.delete(AP_CHANGE_TIMEOUT_KEY)
         }
-        
+
         let newAccessPoint = this._device.active_access_point;
-        if(!newAccessPoint || newAccessPoint == null || this.accessPoint == newAccessPoint){
+        if(!newAccessPoint || newAccessPoint == null){
             return;
         }
-          
+
+        let _oldApMenuItem = this._disconnectButton?.get_parent();
+        if(_oldApMenuItem?._network.checkAccessPoint(newAccessPoint))
+        {
+            _l("Connected to same AP, no change needed");
+            return;
+        }
+
         this.accessPoint = newAccessPoint;
         var menuItem = this._getWifiMenuItem();
         if (!menuItem) {
@@ -135,7 +141,7 @@ class WifiDevice {
 
         _l(network);
         _l(apMenuItem);
-       
+
         if (!apMenuItem) {
             _l("Adding Timeout for AP_CHANGE_TIMEOUT_KEY device");
             this._timeOuts.set(AP_CHANGE_TIMEOUT_KEY, GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, this._activeApChanged.bind(this)))
@@ -144,7 +150,7 @@ class WifiDevice {
 
         _l("Adding DC menu..");
         this._disconnectButton?.destroy();
-        
+
         this._disconnectButton = new QuickSettingsItem({
             //style_class: 'icon-button',
             style_class: 'button',
@@ -154,11 +160,12 @@ class WifiDevice {
             x_expand:true,
             label: _("Disconnect")
         });
-        
+
         apMenuItem.add_child(this._disconnectButton)
         apMenuItem._label.y_align = Clutter.ActorAlign.CENTER
-        this._disconnectButton.connect('clicked', this._disconnectDevice.bind(this));  
-        this._disconnectButton.visible = false;  
+        this._disconnectButton.connect('clicked', this._disconnectDevice.bind(this));
+        this._disconnectButton.visible = false;
+        this._sync();
     }
 
     _disconnectDevice() {
@@ -177,7 +184,7 @@ class WifiDevice {
         }
 
         this._sync();
-           
+
         /*if(device.active_access_point) {
             this.accessPoint = device.active_access_point;
         }*/
@@ -213,10 +220,10 @@ class WifiDevice {
 
         _l(this._disconnectButton)
         if(this._disconnectButton){
-            this._disconnectButton.visible = this._device.state > NM.DeviceState.DISCONNECTED;            
+            this._disconnectButton.visible = this._device.state > NM.DeviceState.DISCONNECTED;
         }
         _l(this._disconnectButton?.visible)
-        
+
 
         this._setReconnectVisibility();
     }
@@ -227,8 +234,8 @@ class WifiDevice {
         this._getWifiMenuItem(this._device)?.set_vertical(false)
         this._timeOuts.forEach(GLib.source_remove);
         this._extDeviceMenuSection.destroy();
-        this._disconnectButton?.destroy();        
-    } 
+        this._disconnectButton?.destroy();
+    }
 }
 
 export default class WifiDisconnector extends Extension {
@@ -272,7 +279,7 @@ export default class WifiDisconnector extends Extension {
                 _l(this._network._wirelessToggle)
                 this._wirelessToggle._nmDevices.forEach((device) => this._deviceAdded(this._client, device));
                 this._signalManager.addSignal(this._client, 'device-added', this._deviceAdded.bind(this));
-                this._signalManager.addSignal(this._client, 'device-removed', this._deviceRemoved.bind(this));                
+                this._signalManager.addSignal(this._client, 'device-removed', this._deviceRemoved.bind(this));
                 this._signalManager.addSignal(this._gsettings, "changed::" + Constants.ENABLE_DEBUG, () => setLog(this._gsettings.get_boolean(Constants.ENABLE_DEBUG)));
             }
         }
@@ -297,7 +304,7 @@ export default class WifiDisconnector extends Extension {
 
         this._getWifiDevice(device, true);
         this._signalManager.addSignal(device, 'state-changed', this._stateChanged.bind(this));
-    }    
+    }
 
     _stateChanged(device, newstate, oldstate, reason) {
         _l(device.get_permanent_hw_address() + "---" + newstate + "---" + oldstate + "---"+ device.state+ "---" + reason)
@@ -322,7 +329,7 @@ export default class WifiDisconnector extends Extension {
             return;
         }
         _l("Removing the device.." + device.get_permanent_hw_address())
-        
+
         this._signalManager.disconnectBySource(device);
         this._removeDeviceUI(this._getWifiDevice(device, false))
     }
@@ -334,12 +341,12 @@ export default class WifiDisconnector extends Extension {
         _l("Removing device ui as its deactivated")
         this._devices.delete(_myDevice._device);
         _myDevice.destroy();
-    }    
+    }
 
     disable() {
         _l("Extension disable")
         if (this._timeoutId) {
-            GLib.source_remove(this._timeoutId);            
+            GLib.source_remove(this._timeoutId);
         }
         [...this._devices.keys()].forEach((d) => this._deviceRemoved(this._client, d));
         this._signalManager.disconnectAll();

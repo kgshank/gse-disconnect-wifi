@@ -3,12 +3,12 @@
  * the terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
  * version.
- * 
+ *
  * This program is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
  * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
  * details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with
  * this program. If not, see <http://www.gnu.org/licenses/>.
  * *****************************************************************************
@@ -56,7 +56,7 @@ export class SignalManager {
         if(signalSource && signalName && callback) {
             obj = new Signal(signalSource, signalName, callback);
             obj.connect();
-            
+
             if(!this._signalsBySource.has(signalSource)) {
                 this._signalsBySource.set(signalSource, []);
             }
@@ -70,7 +70,7 @@ export class SignalManager {
     }
 
     disconnectBySource(signalSource) {
-        this._signalsBySource.get(signalSource)?.forEach(obj => obj.disconnect());        
+        this._signalsBySource.get(signalSource)?.forEach(obj => obj.disconnect());
     }
 }
 
@@ -87,12 +87,12 @@ export function _log(msg) {
 export function dump(obj) {
     var propValue;
     for(var propName in obj) {
-        try{		    
+        try{
             propValue = obj[propName];
             _log(propName + ": " + propValue);
         }
         catch(e){_log(propName + "!!!Error!!!");}
-    } 
+    }
 }
 
 export function ssidToLabel(ssid) {
