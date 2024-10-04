@@ -1,5 +1,8 @@
 ### Change log
 -----------------------
+### 36
+* Compatibility updates for Gnome 47
+
 ### 34,35
 * Code cleanup
 * Disconnect option now shown on the connnected AP
