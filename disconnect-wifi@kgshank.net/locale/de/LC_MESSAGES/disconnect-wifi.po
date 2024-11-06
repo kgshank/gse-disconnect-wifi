@@ -24,11 +24,11 @@ msgstr ""
 
 #: disconnect-wifi@kgshank.net/prefs.js:40
 msgid "Appearance"
-msgstr ""
+msgstr "Aussehen"
 
 #: disconnect-wifi@kgshank.net/prefs.js:41
 msgid "Configure the appearance of the extension"
-msgstr ""
+msgstr "Das Aussehen der Erweiterung konfigurieren"
 
 #: disconnect-wifi@kgshank.net/extension.js:95
 #: disconnect-wifi@kgshank.net/extension.js:154
@@ -37,23 +37,24 @@ msgstr "Trennen"
 
 #: disconnect-wifi@kgshank.net/prefs.js:58
 msgid "Enable Debug"
-msgstr ""
+msgstr "Debug-Modus aktivieren"
 
 #: disconnect-wifi@kgshank.net/prefs.js:59
 msgid "Enable this option to show the debug messages"
-msgstr ""
+msgstr "Aktiviere diese Option, um Debug-Nachrichten zu sehen"
 
 #: disconnect-wifi@kgshank.net/prefs.js:34
 msgid "General"
-msgstr ""
+msgstr "Allgemein"
 
 #: disconnect-wifi@kgshank.net/prefs.js:47
 msgid "Show Reconnect option always"
-msgstr ""
+msgstr "Immer Wiederverbinden-Option zeigen"
 
 #: disconnect-wifi@kgshank.net/prefs.js:48
 msgid "Show the reconnect option even when a Wifi network is connected"
-msgstr ""
+msgstr "Zeigt die Widerverbinden-Option selbst, wenn eine WLAN-Verbindung besteht"
 
+#: disconnect-wifi@kgshank.net/extension.js:28
 #~ msgid "Reconnect"
 #~ msgstr "Wiederverbinden"
