@@ -49,12 +49,12 @@ msgstr "Allgemein"
 
 #: disconnect-wifi@kgshank.net/prefs.js:47
 msgid "Show Reconnect option always"
-msgstr "Immer Wiederverbinden-Option zeigen"
+msgstr "Immer Erneut verbinden-Option zeigen"
 
 #: disconnect-wifi@kgshank.net/prefs.js:48
 msgid "Show the reconnect option even when a Wifi network is connected"
-msgstr "Zeigt die Widerverbinden-Option selbst, wenn eine WLAN-Verbindung besteht"
+msgstr "Zeigt die Erneut verbinden-Option selbst, wenn eine WLAN-Verbindung besteht"
 
 #: disconnect-wifi@kgshank.net/extension.js:28
-#~ msgid "Reconnect"
-#~ msgstr "Wiederverbinden"
+msgid "Reconnect"
+msgstr "Erneut verbinden"
