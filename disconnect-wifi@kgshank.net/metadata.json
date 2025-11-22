@@ -8,7 +8,8 @@
   "shell-version": [
     "46",
     "47",
-    "48"
+    "48",
+    "49"
   ],
   "url": "https://github.com/kgshank/gse-disconnect-wifi",
   "uuid": "disconnect-wifi@kgshank.net",
